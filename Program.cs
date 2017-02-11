@@ -14,68 +14,86 @@ namespace GPNC
             //Graph G = new Graph();
             //for (int i = 0; i < 10; i++)
             //{
-            //    Node node = new Node(i);
-            //    G.AddNodeToGraph(i, node);
+            //    G.AddNodeToGraph(i);
             //}
             //for (int i = 0; i < 9; i++)
             //{
-            //    Node n = G.GetNode(i);
-            //    Node npe = G.GetNode(i + 1);
 
             //    //misschien hier iets aan doen 
-            //    n.AddFromEgde(i + 1, 20 - i);
-            //    npe.AddToEgde(i);
+            //    G.AddFromEgde(i, i + 1, 20 - (int)i);
+            //    G.AddToEgde(i + 1, i);
             //}
             //G.print();
             //Console.ReadLine();
             //G.ContractList(new List<int> { 4, 5, 8 });
-            //G.ContractList(new List<int> { 9,6 });
+            //G.print();
+            //Console.ReadLine();
+            //G.ContractList(new List<int> { 9, 6 });
+            //G.print();
+            //Console.ReadLine();
+            //Graph G2 = G.CreateSubGraph(new List<int> { 1,2,3});
 
-            List<uint> test = G.nodes.Take(100000).ToList();
-            G.ContractList(test);
-            G.print();
+            //List<int> test = G.nodes.Take(100000).ToList();
+            //G.ContractList(test);
+            //Graph G2 = G.CreateSubGraph(G.nodes.Take(10000).ToList());
+            //G2.print();
+            BFS bfs = new BFS(G,10000,1,10,1);
+            bfs.Core.ForEach(x => Console.Write(x + " "));
+            bfs.T.ForEach(x => Console.Write(x + " "));
+            exportIds(bfs.Core, "core");
+            exportIds(bfs.T, "t");
             Console.ReadLine();
+        }
+
+        public static void exportIds(List<int> ids, string nameFile) {
+            String[] strings = new String[ids.Count];
+
+            for (int i = 0; i < ids.Count; i++)
+            {
+                strings[i] = ids[i].ToString();
+            }
+            System.IO.File.WriteAllLines("F:\\Users\\Rogier\\Desktop\\"+nameFile+".csv", strings);
         }
     }
 
     class Graph
     {
-        public HashSet<uint> nodes = new HashSet<uint>();
-        public Dictionary<uint, HashSet<uint>> AllFromNodes = new Dictionary<uint, HashSet<uint>>();
-        public Dictionary<uint, HashSet<uint>> AllToNodes = new Dictionary<uint, HashSet<uint>>();
-        public Dictionary<uint, Dictionary<uint, int>> AllWeights = new Dictionary<uint, Dictionary<uint, int>>();
+        public HashSet<int> nodes = new HashSet<int>();
+        public Dictionary<int, HashSet<int>> AllFromNodes = new Dictionary<int, HashSet<int>>();
+        public Dictionary<int, HashSet<int>> AllToNodes = new Dictionary<int, HashSet<int>>();
+        public Dictionary<int, Dictionary<int, int>> AllWeights = new Dictionary<int, Dictionary<int, int>>();
 
+        //TODO add size and trace contractions
 
-
-        public uint AddNodeToGraph(uint id)
+        public int AddNodeToGraph(int id)
         {
             if (!nodes.Contains(id))
             {
                 nodes.Add(id);
-                HashSet<uint> fromNodes = new HashSet<uint>();
-                HashSet<uint> toNodes = new HashSet<uint>();
-                Dictionary<uint, int> weights = new Dictionary<uint, int>();
+                HashSet<int> fromNodes = new HashSet<int>();
+                HashSet<int> toNodes = new HashSet<int>();
+                Dictionary<int, int> weights = new Dictionary<int, int>();
                 AllFromNodes[id] = fromNodes;
                 AllToNodes[id] = toNodes;
                 AllWeights[id] = weights;
             }
             return id;
         }
-        public void RemoveNodeFromGraph(uint id)
+        public void RemoveNodeFromGraph(int id)
         {
             nodes.Remove(id);
         }
 
-        public uint Contraction(uint v, uint w)
+        public int Contraction(int v, int w)
         {
-            HashSet<uint> toNodesW = AllToNodes[w];
-            HashSet<uint> fromNodesW = AllFromNodes[w];
+            HashSet<int> toNodesW = AllToNodes[w];
+            HashSet<int> fromNodesW = AllFromNodes[w];
 
             //Dictionary<int, int> weightsW = w.Weights;
 
 
 
-            foreach (uint x in fromNodesW)
+            foreach (int x in fromNodesW)
             {
                 if (x != v)
                 {
@@ -84,7 +102,7 @@ namespace GPNC
                     AddToEgde(x, v);
                 }
             }
-            foreach (uint x in toNodesW)
+            foreach (int x in toNodesW)
             {
                 if (x != v)
                 {
@@ -102,23 +120,23 @@ namespace GPNC
             return v;
         }
 
-        public void ContractList(List<uint> contractionList)
+        public void ContractList(List<int> contractionList)
         {
 
             if (nodes.Count <= 1)
             {
                 throw new Exception("CONTRACTING EMPTY/SINGLTON LIST BTFO");
             }
-            uint first = contractionList.First();
-            foreach (uint id in contractionList.Skip(1))
+            int first = contractionList.First();
+            foreach (int id in contractionList.Skip(1))
             {
                 first = Contraction(first, id);
                 //print();
-                Console.WriteLine(id);
+                //Console.WriteLine(id);
             }
         }
 
-        public void AddFromEgde(uint id, uint idOtherNode, int weight)
+        public void AddFromEgde(int id, int idOtherNode, int weight)
         {
 
             if (!AllFromNodes[id].Contains(idOtherNode))
@@ -129,16 +147,16 @@ namespace GPNC
             else
                 AllWeights[id][idOtherNode] += weight;
         }
-        public void AddToEgde(uint id, uint idOtherNode)
+        public void AddToEgde(int id, int idOtherNode)
         {
             if (!AllToNodes[id].Contains(idOtherNode))
                 AllToNodes[id].Add(idOtherNode);
         }
-        public void RemoveFromEdge(uint id, uint idOtherNode)
+        public void RemoveFromEdge(int id, int idOtherNode)
         {
             AllFromNodes[id].Remove(idOtherNode);
         }
-        public void RemoveToEdge(uint id, uint idOtherNode)
+        public void RemoveToEdge(int id, int idOtherNode)
         {
             AllToNodes[id].Remove(idOtherNode);
         }
@@ -146,24 +164,24 @@ namespace GPNC
 
         public void print()
         {
-            foreach (uint id in nodes)
+            foreach (int id in nodes)
             {
-                HashSet<uint> fromNodes = AllFromNodes[id];
-                HashSet<uint> toNodes = AllToNodes[id];
+                HashSet<int> fromNodes = AllFromNodes[id];
+                HashSet<int> toNodes = AllToNodes[id];
                 string from = "";
-                foreach (uint x in fromNodes)
+                foreach (int x in fromNodes)
                     from += " " + x + "::" + AllWeights[id][x];
                 string to = "";
-                foreach (uint x in toNodes) to += " " + x;
+                foreach (int x in toNodes) to += " " + x;
                 Console.WriteLine("{0}: with fromNodes {1} and toNodes {2}", id, from, to);
 
             }
         }
-        public Graph CreateSubGraph(List<uint> ids)
+        public Graph CreateSubGraph(List<int> ids)
         {
             Graph G2 = new Graph();
 
-            foreach (uint id in ids)
+            foreach (int id in ids)
             {
                 if (!nodes.Contains(id))
                 { throw new Exception("Node not in original graph"); }
@@ -172,12 +190,90 @@ namespace GPNC
                     G2.AddNodeToGraph(id);
                 }
             }
-            var allToNodes = new Dictionary<uint, HashSet<uint>>();
-            var allFromNodes = new Dictionary<uint, HashSet<uint>>();
-            G2.AllWeights = AllWeights;
 
+            foreach (int id in G2.nodes)
+            {
+                HashSet<int> fromNodes = AllFromNodes[id];
+                foreach (int nId in fromNodes)
+                {
+                    if (G2.nodes.Contains(nId))
+                    {
+                        G2.AddFromEgde(id, nId, AllWeights[id][nId]);
+                    }
+                }
+                HashSet<int> toNodes = AllToNodes[id];
+                foreach (int nId in toNodes)
+                {
+                    if (G2.nodes.Contains(nId))
+                    {
+                        G2.AddToEgde(id, nId);
+                    }
+                }
+            }
             return G2;
         }
+
+    }
+
+    class BFS
+    {
+
+        public List<int> T = new List<int>();
+        public List<int> Core = new List<int>();
+        Queue<int> queue = new Queue<int>();
+        HashSet<int> visited = new HashSet<int>();
+        Graph G;
+        int MaxTree;
+        int MaxCore;
+        public BFS(Graph g, int U, double alpha, double f, int startNode)
+        {
+            G = g;
+            MaxTree = (int)(U * alpha);
+            MaxCore = (int)((double)U / f);
+            run(startNode);
+        }
+
+        public void run(int startNode)
+        {
+            
+            queue.Enqueue(startNode);
+            visited.Add(startNode);
+
+            while (queue.Count > 0 && T.Count < MaxTree)
+            {
+                int currentNode = queue.Dequeue();
+                HashSet<int> fromNodes = G.AllFromNodes[currentNode];
+                foreach (int nId in fromNodes)
+                {
+                    visitNode(nId);
+                }
+                HashSet<int> toNodes = G.AllToNodes[currentNode];
+                foreach (int nId in toNodes)
+                {
+                    visitNode(nId);
+                }
+
+            }
+
+        }
+        private void visitNode(int v) {
+            if (!visited.Contains(v))
+            {
+                queue.Enqueue(v);
+                if (Core.Count < MaxCore) {
+                    Core.Add(v);
+                }
+                T.Add(v);
+                visited.Add(v);
+            }
+        }
+
+        private int RandomVertex()
+        {
+            throw new NotImplementedException();
+        }
+
+
     }
 
 
