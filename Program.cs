@@ -31,7 +31,7 @@ namespace GPNC
             //G.ContractList(new List<int> { 4, 5, 8 });
             //G.ContractList(new List<int> { 9,6 });
 
-            List<int> test = G.nodes.Keys.Take(100000).ToList();
+            List<uint> test = G.nodes.Take(100000).ToList();
             G.ContractList(test);
             G.print();
             Console.ReadLine();
@@ -40,155 +40,145 @@ namespace GPNC
 
     class Graph
     {
-        public Dictionary<int, Node> nodes = new Dictionary<int, Node>();
+        public HashSet<uint> nodes = new HashSet<uint>();
+        public Dictionary<uint, HashSet<uint>> AllFromNodes = new Dictionary<uint, HashSet<uint>>();
+        public Dictionary<uint, HashSet<uint>> AllToNodes = new Dictionary<uint, HashSet<uint>>();
+        public Dictionary<uint, Dictionary<uint, int>> AllWeights = new Dictionary<uint, Dictionary<uint, int>>();
 
-        public void AddNodeToGraph(int id, Node n)
-        {
-            nodes[id] = n;
-        }
 
-        public Node MakeNodeOrReturnNode(int id)
+
+        public uint AddNodeToGraph(uint id)
         {
-            if (!nodes.ContainsKey(id))
+            if (!nodes.Contains(id))
             {
-                Node v = new Node(id);
-                nodes[id] = v;
+                nodes.Add(id);
+                HashSet<uint> fromNodes = new HashSet<uint>();
+                HashSet<uint> toNodes = new HashSet<uint>();
+                Dictionary<uint, int> weights = new Dictionary<uint, int>();
+                AllFromNodes[id] = fromNodes;
+                AllToNodes[id] = toNodes;
+                AllWeights[id] = weights;
             }
-            return nodes[id];
+            return id;
         }
-        public void RemoveNodeFromGraph(int id)
+        public void RemoveNodeFromGraph(uint id)
         {
             nodes.Remove(id);
         }
-        public Node GetNode(int id)
+
+        public uint Contraction(uint v, uint w)
         {
-            return nodes[id];
-        }
+            HashSet<uint> toNodesW = AllToNodes[w];
+            HashSet<uint> fromNodesW = AllFromNodes[w];
 
-        public Node Contraction(Node v, Node w)
-        {
-            int idV = v.Id;
-            int idW = w.Id;
-
-            HashSet<int> toNodesW = w.ToNodes;
-            HashSet<int> fromNodesW = w.FromNodes;
-
-            Dictionary<int, int> weightsW = w.Weights;
-            
+            //Dictionary<int, int> weightsW = w.Weights;
 
 
-            foreach (int x in fromNodesW)
+
+            foreach (uint x in fromNodesW)
             {
-                if (x != idV)
+                if (x != v)
                 {
-                    nodes[x].RemoveToEdge(idW);
-                    v.AddFromEgde(x, weightsW[x]);
-                    nodes[x].AddToEgde(idV);
+                    RemoveToEdge(x, w);
+                    AddFromEgde(v, x, AllWeights[w][x]);
+                    AddToEgde(x, v);
                 }
             }
-            foreach (int x in toNodesW)
+            foreach (uint x in toNodesW)
             {
-                if (x != idV)
+                if (x != v)
                 {
-                    v.AddToEgde(x);
-                    Node neighbour = nodes[x];
-                    int weight = neighbour.Weights[idW];
-                    neighbour.RemoveFromEdge(idW);
-                    neighbour.AddFromEgde(idV, weight);
+                    AddToEgde(v, x);
+                    int weight = AllWeights[x][w];
+                    RemoveFromEdge(x, w);
+                    AddFromEgde(x, v, weight);
                 }
             }
 
-            v.RemoveFromEdge(idW);
-            v.RemoveToEdge(idW);
-            RemoveNodeFromGraph(idW);
+            RemoveFromEdge(v, w);
+            RemoveToEdge(v, w);
+            RemoveNodeFromGraph(w);
 
-            v.AddIds(w.Ids);
             return v;
         }
 
-        public void ContractList(List<int> contractionList)
+        public void ContractList(List<uint> contractionList)
         {
 
             if (nodes.Count <= 1)
             {
                 throw new Exception("CONTRACTING EMPTY/SINGLTON LIST BTFO");
             }
-            Node first = nodes[contractionList.First()];
-            foreach (int id in contractionList.Skip(1))
+            uint first = contractionList.First();
+            foreach (uint id in contractionList.Skip(1))
             {
-                Node second = nodes[id];
-                first = Contraction(first, second);
+                first = Contraction(first, id);
                 //print();
                 Console.WriteLine(id);
             }
         }
 
+        public void AddFromEgde(uint id, uint idOtherNode, int weight)
+        {
 
+            if (!AllFromNodes[id].Contains(idOtherNode))
+            {
+                AllFromNodes[id].Add(idOtherNode);
+                AllWeights[id][idOtherNode] = weight;
+            }
+            else
+                AllWeights[id][idOtherNode] += weight;
+        }
+        public void AddToEgde(uint id, uint idOtherNode)
+        {
+            if (!AllToNodes[id].Contains(idOtherNode))
+                AllToNodes[id].Add(idOtherNode);
+        }
+        public void RemoveFromEdge(uint id, uint idOtherNode)
+        {
+            AllFromNodes[id].Remove(idOtherNode);
+        }
+        public void RemoveToEdge(uint id, uint idOtherNode)
+        {
+            AllToNodes[id].Remove(idOtherNode);
+        }
 
 
         public void print()
         {
-            foreach (KeyValuePair<int, Node> kvp in nodes)
+            foreach (uint id in nodes)
             {
-                HashSet<int> fromNodes = kvp.Value.FromNodes;
-                HashSet<int> toNodes = kvp.Value.ToNodes;
+                HashSet<uint> fromNodes = AllFromNodes[id];
+                HashSet<uint> toNodes = AllToNodes[id];
                 string from = "";
-                foreach (int x in fromNodes)
-                    from += " " + x + "::" + kvp.Value.Weights[x];
+                foreach (uint x in fromNodes)
+                    from += " " + x + "::" + AllWeights[id][x];
                 string to = "";
-                foreach (int x in toNodes) to += " " + x;
-                Console.WriteLine("{0}: with fromNodes {1} and toNodes {2}", kvp.Key, from, to);
+                foreach (uint x in toNodes) to += " " + x;
+                Console.WriteLine("{0}: with fromNodes {1} and toNodes {2}", id, from, to);
 
             }
         }
-    }
-    class Node
-    {
-        public HashSet<int> FromNodes { get; private set; }
-        public HashSet<int> ToNodes { get; private set; }
-        public Dictionary<int, int> Weights { get; private set; }
-        public int Id { get; private set; }
-        public int Size { get; private set; }
-        public List<int> Ids { get; private set; }
+        public Graph CreateSubGraph(List<uint> ids)
+        {
+            Graph G2 = new Graph();
 
-        public Node(int id)
-        {
-            Id = id;
-            FromNodes = new HashSet<int>();
-            ToNodes = new HashSet<int>();
-            Weights = new Dictionary<int, int>();
-            Ids = new List<int>();
-            Ids.Add(id);
-        }
-        public void AddIds(List<int> ids){
-            ids.ForEach(x => Ids.Add(x));
-        }
-        public void AddFromEgde(int idNode, int weight)
-        {
-            if (!FromNodes.Contains(idNode))
+            foreach (uint id in ids)
             {
-                FromNodes.Add(idNode);
-                Weights[idNode] = weight;
+                if (!nodes.Contains(id))
+                { throw new Exception("Node not in original graph"); }
+                else
+                {
+                    G2.AddNodeToGraph(id);
+                }
             }
-            else
-                Weights[idNode] += weight;
-        }
-        public void AddToEgde(int idNode)
-        {
-            if (!ToNodes.Contains(idNode))
-                ToNodes.Add(idNode);
-        }
-        public void RemoveFromEdge(int idNode)
-        {
-            FromNodes.Remove(idNode);
+            var allToNodes = new Dictionary<uint, HashSet<uint>>();
+            var allFromNodes = new Dictionary<uint, HashSet<uint>>();
+            G2.AllWeights = AllWeights;
 
-            //optionele stap denk ik
-            Weights.Remove(idNode);
-        }
-        public void RemoveToEdge(int idNode)
-        {
-            ToNodes.Remove(idNode);
+            return G2;
         }
     }
+
 
 }
