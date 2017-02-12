@@ -10,6 +10,7 @@ namespace GPNC
     class MinCut
     {
         public List<int> partition;
+
         public MinCut(Graph G, List<int> core, List<int> ring) {
             G.ContractList(core);
             G.ContractList(ring);
@@ -19,23 +20,24 @@ namespace GPNC
 
         private List<int> SolveOnGraph(Graph G, int s, int t)
         {
-            List<Arc> arcs = new List<Arc>();
             Dictionary<int, Dictionary<int, int>> arcToIndex = new Dictionary<int, Dictionary<int, int>>();
             int numNodes = 0;
             int numArcs = 0;
             int index = 0;
+            List<int> start_nodes = new List<int>();
+            List<int> end_nodes = new List<int>();
+            List<int> capacities = new List<int>();
             foreach (int n in G.nodes)
             {
                 HashSet<int> fromNodes = G.AllFromNodes[n];
                 if (fromNodes.Count > 0) numNodes++;
                 foreach (int fn in fromNodes)
                 {
-                    Arc arc = new Arc();
-                    arc.from = n;
-                    arc.to = fn;
-                    arc.capacity = (int)G.AllWeights[n][fn];
+                    start_nodes.Add(n);
+                    end_nodes.Add(fn);
+                    capacities.Add((int)G.AllWeights[n][fn]);
                     numArcs++;
-                    arcs.Add(arc);
+
 
                     if (!arcToIndex.ContainsKey(n))
                     {
@@ -46,18 +48,10 @@ namespace GPNC
                 }
             }
             Console.WriteLine("done with arcs");
-            int[] start_nodes = new int[arcs.Count];
-            int[] end_nodes = new int[arcs.Count];
-            int[] capacities = new int[arcs.Count];
-            for (int i = 0; i < arcs.Count; i++)
-            {
-                start_nodes[i] = arcs[i].from;
-                end_nodes[i] = arcs[i].to;
-                capacities[i] = arcs[i].capacity;
 
-            }
 
-            MaxFlow maxflow = SolveMaxFlow(s, t, numNodes, numArcs, start_nodes, end_nodes, capacities);
+            MaxFlow maxflow = SolveMaxFlow(s, t, numNodes, numArcs, start_nodes.ToArray(), end_nodes.ToArray(), capacities.ToArray());
+            Console.WriteLine("done with flow");
             Queue<int> queue = new Queue<int>();
             HashSet<int> visited = new HashSet<int>();
 
@@ -103,6 +97,7 @@ namespace GPNC
 
 
             }
+            Console.WriteLine("done with partitioning");
             return result;
         }
 

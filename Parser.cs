@@ -9,12 +9,20 @@ namespace GPNC
 {
     static class Parser
     {
+        static bool nl = true;
         public static Graph ParseCSVFile()
         {
 
             //String path = "C:\\Users\\Roosje\\OneDrive\\Roos\\Downloads\\arcNL.csv";
-
-            String path = "F:\\Users\\Rogier\\Desktop\\CQM\\arcNL.csv";
+            String path;
+            if (nl)
+            {
+                path = "F:\\Users\\Rogier\\Desktop\\CQM\\arcNL.csv";
+            }
+            else
+            {
+                path = "F:\\Users\\Rogier\\Desktop\\CQM\\arc.csv";
+            }
             Graph G = new Graph();
             Stream stream = File.Open(path, FileMode.Open);
             using (StreamReader sr = new StreamReader(stream))
@@ -49,7 +57,15 @@ namespace GPNC
         public static Dictionary<int, NodePoint> ParseNodes()
         {
             Dictionary<int, NodePoint> dict = new Dictionary<int, NodePoint>();
-            String path = "F:\\Users\\Rogier\\Desktop\\CQM\\nodeNL.csv";
+            String path;
+            if (nl)
+            {
+                path = "F:\\Users\\Rogier\\Desktop\\CQM\\nodeNL.csv";
+            }
+            else
+            {
+                path = "F:\\Users\\Rogier\\Desktop\\CQM\\node.csv";
+            }
 
             List<Node> nodes = new List<Node>();
             Stream stream = File.Open(path, FileMode.Open);

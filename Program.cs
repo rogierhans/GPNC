@@ -18,6 +18,10 @@ namespace GPNC
 
 
             Graph G = Parser.ParseCSVFile();
+            BFS bfs = new BFS(G, G.nodes.Count, 1, 10, 1);
+
+            G = G.CreateSubGraph(bfs.SubGraph);
+
             //Graph G = new Graph();
             //for (int i = 0; i < 10; i++)
             //{
@@ -48,15 +52,18 @@ namespace GPNC
             Dictionary<int, NodePoint> nodes = Parser.ParseNodes();
 
             HashSet<int> allNodes = new HashSet<int>();
-            foreach (int id in G.nodes) {
+            foreach (int id in G.nodes)
+            {
                 allNodes.Add(id);
             }
             Random rnd = new Random();
-            while (allNodes.Count > 0) {
-                int rInt = allNodes.ToList()[rnd.Next(allNodes.Count)];          
-                List<int> p = createPartition(nodes,G,rInt);
+            while (allNodes.Count > 0)
+            {
+                int rInt = allNodes.ToList()[rnd.Next(allNodes.Count)];
+                Console.WriteLine("random node" + rInt);
+                List<int> p = createPartition(nodes, G, rInt);
                 p.ForEach(x => allNodes.Remove(x));
-                Console.WriteLine("Oki");
+                Console.WriteLine(allNodes.Count + "to GO");
             }
 
 
@@ -65,11 +72,15 @@ namespace GPNC
         }
 
         static int i = 0;
-        public static List<int> createPartition(Dictionary<int, NodePoint> nodes,Graph G, int startNode) {
-            BFS bfs = new BFS(G, 100000, 1, 10, startNode);
+        public static List<int> createPartition(Dictionary<int, NodePoint> nodes, Graph G, int startNode)
+        {
+            BFS bfs = new BFS(G, 50000, 1, 10, startNode);
+            Console.WriteLine("Core size:" + bfs.Core.Count);
+            Console.WriteLine("Contains random node: " + bfs.Core.Contains(startNode));
             Graph G2 = G.CreateSubGraph(bfs.SubGraph);
             MinCut minCut = new MinCut(G2, bfs.Core, bfs.Ring);
-            test(nodes, bfs.T, minCut.partition,i++ + "");
+            test(nodes, bfs.T, minCut.partition, i++ + "");
+            Console.WriteLine("created Picture");
             return minCut.partition;
         }
 
@@ -83,32 +94,35 @@ namespace GPNC
             }
             System.IO.File.WriteAllLines("F:\\Users\\Rogier\\Desktop\\" + nameFile + ".csv", strings);
         }
+
+        static Graphics grap;
         public static void test(Dictionary<int, NodePoint> nodes, List<int> specialNodes, List<int> superSpecialNodes, String filename)
         {
 
-            using (var bmp = new Bitmap(1000, 1000))
-            using (var gr = Graphics.FromImage(bmp))
+            var bmp = new Bitmap(1000, 1000);
+            var gr = Graphics.FromImage(bmp);
+
+
+            foreach (NodePoint np in nodes.Values)
             {
-                //gr.FillRectangle(Brushes.Orange, new Rectangle(0, 0, bmp.Width, bmp.Height));
-                foreach (NodePoint np in nodes.Values)
-                {
-                    gr.FillRectangle(Brushes.Red, np.x, np.y, 1, 1);
-                }
-                specialNodes.ForEach(n =>
-                {
-                    NodePoint np = nodes[n];
-                    gr.FillRectangle(Brushes.Yellow, np.x, np.y, 1, 1);
-                });
-                superSpecialNodes.ForEach(n =>
-                {
-                    NodePoint np = nodes[n];
-                    gr.FillRectangle(Brushes.Green, np.x, np.y, 1, 1);
-                });
-                var path = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-                    filename+".png");
-                bmp.Save(path);
+                gr.FillRectangle(Brushes.Red, np.x, np.y, 1, 1);
             }
+            grap = gr;
+
+            specialNodes.ForEach(n =>
+            {
+                NodePoint np = nodes[n];
+                gr.FillRectangle(Brushes.Yellow, np.x, np.y, 1, 1);
+            });
+            superSpecialNodes.ForEach(n =>
+            {
+                NodePoint np = nodes[n];
+                gr.FillRectangle(Brushes.Green, np.x, np.y, 1, 1);
+            });
+            var path = "F:\\Users\\Rogier\\Desktop\\NLPICSMALL\\" +
+                filename + ".png";
+            bmp.Save(path);
+
         }
 
 
@@ -117,7 +131,7 @@ namespace GPNC
 
 
 
-        
+
 
     }
 
@@ -296,15 +310,14 @@ namespace GPNC
             run(startNode);
         }
 
-        public BFS(Graph g,int startNode) {
+        public BFS(Graph g, int startNode)
+        {
             G = g;
         }
 
         public void run(int startNode)
         {
-
-            queue.Enqueue(startNode);
-            visited.Add(startNode);
+            visitNode(startNode);
 
             while (queue.Count > 0 && T.Count < MaxTree)
             {
@@ -338,7 +351,7 @@ namespace GPNC
                 visited.Add(v);
             }
         }
-       
+
         private int RandomVertex()
         {
             throw new NotImplementedException();
@@ -350,12 +363,6 @@ namespace GPNC
     {
         public int x;
         public int y;
-    }
-    public struct Arc
-    {
-        public int from;
-        public int to;
-        public int capacity;
     }
 
 }
