@@ -22,6 +22,12 @@ namespace GPNC
 
             G = G.CreateSubGraph(bfs.SubGraph);
 
+            int dedend = 0;
+            G.nodes.ToList().ForEach(x => { if (G.AllFromNodes[x].Count + G.AllToNodes[x].Count > 1) dedend++; });
+            int path = 0;
+            G.nodes.ToList().ForEach(x => { if (G.AllFromNodes[x].Count + G.AllToNodes[x].Count > 1) path++; });
+
+            return;
             //Graph G = new Graph();
             //for (int i = 0; i < 10; i++)
             //{
@@ -49,7 +55,7 @@ namespace GPNC
             //Graph G2 = G.CreateSubGraph(G.nodes.Take(10000).ToList());
             //G2.print();
 
-            Dictionary<int, NodePoint> nodes = Parser.ParseNodes();
+            Dictionary<int, NodePoint> nodes = Parser.ParseNodes(G);
 
             HashSet<int> allNodes = new HashSet<int>();
             foreach (int id in G.nodes)
@@ -64,6 +70,7 @@ namespace GPNC
                 List<int> p = createPartition(nodes, G, rInt);
                 p.ForEach(x => allNodes.Remove(x));
                 Console.WriteLine(allNodes.Count + "to GO");
+                Console.ReadLine();
             }
 
 
@@ -74,12 +81,14 @@ namespace GPNC
         static int i = 0;
         public static List<int> createPartition(Dictionary<int, NodePoint> nodes, Graph G, int startNode)
         {
-            BFS bfs = new BFS(G, 50000, 1, 10, startNode);
+            BFS bfs = new BFS(G, 250000, 1, 10, startNode);
             Console.WriteLine("Core size:" + bfs.Core.Count);
             Console.WriteLine("Contains random node: " + bfs.Core.Contains(startNode));
             Graph G2 = G.CreateSubGraph(bfs.SubGraph);
             MinCut minCut = new MinCut(G2, bfs.Core, bfs.Ring);
-            test(nodes, bfs.T, minCut.partition, i++ + "");
+
+            //test(nodes, bfs.T, minCut.partition, bfs.Core, i++ + "");
+            //smallPicturetest(nodes, bfs.T, minCut.partition,bfs.Core, i++ + "");
             Console.WriteLine("created Picture");
             return minCut.partition;
         }
@@ -96,7 +105,7 @@ namespace GPNC
         }
 
         static Graphics grap;
-        public static void test(Dictionary<int, NodePoint> nodes, List<int> specialNodes, List<int> superSpecialNodes, String filename)
+        public static void test(Dictionary<int, NodePoint> nodes, List<int> subGraph, List<int> partition, List<int> core, String filename)
         {
 
             var bmp = new Bitmap(1000, 1000);
@@ -109,29 +118,67 @@ namespace GPNC
             }
             grap = gr;
 
-            specialNodes.ForEach(n =>
+            subGraph.ForEach(n =>
             {
                 NodePoint np = nodes[n];
                 gr.FillRectangle(Brushes.Yellow, np.x, np.y, 1, 1);
             });
-            superSpecialNodes.ForEach(n =>
+            partition.ForEach(n =>
+            {
+                NodePoint np = nodes[n];
+                gr.FillRectangle(Brushes.Blue, np.x, np.y, 1, 1);
+            });
+            core.ForEach(n =>
             {
                 NodePoint np = nodes[n];
                 gr.FillRectangle(Brushes.Green, np.x, np.y, 1, 1);
             });
-            var path = "F:\\Users\\Rogier\\Desktop\\NLPICSMALL\\" +
-                filename + ".png";
+            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
+                filename + "a.png";
             bmp.Save(path);
 
         }
 
+        public static void smallPicturetest(Dictionary<int, NodePoint> nodes, List<int> subGraph, List<int> partition, List<int> core, String filename)
+        {
+            var bmp = new Bitmap(1000, 1000);
+            var gr = Graphics.FromImage(bmp);
+            int maxLati = subGraph.Max(x => nodes[x].lati);
+            int minLati = subGraph.Min(x => nodes[x].lati);
+            int maxLongi = subGraph.Max(x => nodes[x].longi);
+            int minLongi = subGraph.Min(x => nodes[x].longi);
+            subGraph.ForEach(n =>
+            {
+                NodePoint np = nodes[n];
+                gr.FillRectangle(Brushes.Yellow, calcX(np, minLongi, maxLongi), calcY(np, minLati, maxLati), 1, 1);
+            });
+            partition.ForEach(n =>
+            {
+                NodePoint np = nodes[n];
+                gr.FillRectangle(Brushes.Blue, calcX(np, minLongi, maxLongi), calcY(np, minLati, maxLati), 1, 1);
+            });
+            core.ForEach(n =>
+            {
+                NodePoint np = nodes[n];
+                gr.FillRectangle(Brushes.Green, calcX(np, minLongi, maxLongi), calcY(np, minLati, maxLati), 1, 1);
+            });
+            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
+    filename + "b.png";
+            bmp.Save(path);
+        }
+        public static int calcX(NodePoint p, int minLongi, int maxLongi)
+        {
+            int mx = maxLongi - minLongi;
+            int hx = p.longi - minLongi;
+            return (int)(((float)hx / mx) * 1000);
+        }
+        public static int calcY(NodePoint p, int minLati, int maxLati)
+        {
+            int my = maxLati - minLati;
+            int hy = p.lati - minLati;
+            return (int)(1000 - (((float)hy / my) * 1000));
 
-
-
-
-
-
-
+        }
 
     }
 
@@ -363,6 +410,8 @@ namespace GPNC
     {
         public int x;
         public int y;
+        public int lati;
+        public int longi;
     }
 
 }

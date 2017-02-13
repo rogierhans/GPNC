@@ -37,7 +37,8 @@ namespace GPNC
                     int id = Int32.Parse(values[1]);
                     int fromnode = Int32.Parse(values[2]);
                     int tonode = Int32.Parse(values[3]);
-                    int length = Int32.Parse(values[4]);
+                    //int length = Int32.Parse(values[4]);
+                    int length = 1;
                     //Console.WriteLine(fromnode);
                     //remove cycles
                     if (tonode != fromnode)
@@ -54,7 +55,7 @@ namespace GPNC
             }
             return G;
         }
-        public static Dictionary<int, NodePoint> ParseNodes()
+        public static Dictionary<int, NodePoint> ParseNodes(Graph G)
         {
             Dictionary<int, NodePoint> dict = new Dictionary<int, NodePoint>();
             String path;
@@ -78,9 +79,12 @@ namespace GPNC
                     Node n = new Node();
 
                     n.id = Int32.Parse(values[1]);
-                    n.lati = Int32.Parse(values[2]);
-                    n.longi = Int32.Parse(values[3]);
-                    nodes.Add(n);
+                    if (G.nodes.Contains(n.id))
+                    {
+                        n.lati = Int32.Parse(values[2]);
+                        n.longi = Int32.Parse(values[3]);
+                        nodes.Add(n);
+                    }
                 }
             }
             int maxLati = nodes.Max(x => x.lati);
@@ -98,11 +102,14 @@ namespace GPNC
                 NodePoint p = new NodePoint();
                 p.x = (int)(((float)hx / mx) * 1000);
                 p.y = (int)(1000 - (((float)hy / my) * 1000));
+                p.lati = n.lati;
+                p.longi = n.longi;
                 dict[n.id] = p;
             });
             Console.WriteLine("done");
             return dict;
         }
+
 
 
         public struct Node

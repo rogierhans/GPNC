@@ -124,8 +124,16 @@ namespace GPNC
             int sink = t;
 
 
+
             // Find the maximum flow between node 0 and node 4.
             int solveStatus = maxFlow.Solve(source, sink);
+
+            int flow = 0;
+            for (int i = 0; i < numArcs; i++)
+            {
+                flow += (int)maxFlow.Flow(i);
+            }
+            Console.WriteLine(flow);
             if (solveStatus == MaxFlow.OPTIMAL)
             {
             }
