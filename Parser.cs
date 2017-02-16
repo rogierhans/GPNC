@@ -37,16 +37,13 @@ namespace GPNC
                     int id = Int32.Parse(values[1]);
                     int fromnode = Int32.Parse(values[2]);
                     int tonode = Int32.Parse(values[3]);
-                    //int length = Int32.Parse(values[4]);
-                    int length = 1;
                     //Console.WriteLine(fromnode);
                     //remove cycles
                     if (tonode != fromnode)
                     {
                         int v = G.AddNodeToGraph(fromnode);
                         int w = G.AddNodeToGraph(tonode);
-                        G.AddFromEgde(v, tonode, length);
-                        G.AddToEgde(w, fromnode);
+                        G.AddEdge(v, w, 1);
                     }
 
                     //v.AddEgde(tonode, length);

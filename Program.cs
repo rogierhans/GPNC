@@ -18,16 +18,21 @@ namespace GPNC
 
 
             Graph G = Parser.ParseCSVFile();
+            G.print();
+            //List<int> test = G.nodes.Skip(5).Take(100000).ToList();
+            //Console.ReadLine();
+            //G.ContractList(test);
+
+
             BFS bfs = new BFS(G, G.nodes.Count, 1, 10, 1);
 
             G = G.CreateSubGraph(bfs.SubGraph);
 
-            int dedend = 0;
-            G.nodes.ToList().ForEach(x => { if (G.AllFromNodes[x].Count + G.AllToNodes[x].Count > 1) dedend++; });
-            int path = 0;
-            G.nodes.ToList().ForEach(x => { if (G.AllFromNodes[x].Count + G.AllToNodes[x].Count > 1) path++; });
-
-            return;
+            //int dedend = 0;
+            //G.nodes.ToList().ForEach(x => { if (G.AllFromNodes[x].Count + G.AllToNodes[x].Count == 1) dedend++; });
+            //int path = 0;
+            //G.nodes.ToList().ForEach(x => { if (G.AllFromNodes[x].Count + G.AllToNodes[x].Count == 2) path++; });
+            //Console.WriteLine("deadend{0}   path{1}", dedend, path);
             //Graph G = new Graph();
             //for (int i = 0; i < 10; i++)
             //{
@@ -50,8 +55,7 @@ namespace GPNC
             //Console.ReadLine();
             //Graph G2 = G.CreateSubGraph(new List<int> { 1,2,3});
 
-            //List<int> test = G.nodes.Take(100000).ToList();
-            //G.ContractList(test);
+
             //Graph G2 = G.CreateSubGraph(G.nodes.Take(10000).ToList());
             //G2.print();
 
@@ -87,8 +91,8 @@ namespace GPNC
             Graph G2 = G.CreateSubGraph(bfs.SubGraph);
             MinCut minCut = new MinCut(G2, bfs.Core, bfs.Ring);
 
-            //test(nodes, bfs.T, minCut.partition, bfs.Core, i++ + "");
-            //smallPicturetest(nodes, bfs.T, minCut.partition,bfs.Core, i++ + "");
+            test(nodes, bfs.T, minCut.partition, bfs.Core, i++ + "");
+            smallPicturetest(nodes, bfs.T, minCut.partition,bfs.Core, i++ + "");
             Console.WriteLine("created Picture");
             return minCut.partition;
         }
@@ -185,9 +189,12 @@ namespace GPNC
     class Graph
     {
         public HashSet<int> nodes = new HashSet<int>();
-        public Dictionary<int, HashSet<int>> AllFromNodes = new Dictionary<int, HashSet<int>>();
-        public Dictionary<int, HashSet<int>> AllToNodes = new Dictionary<int, HashSet<int>>();
+
+
+        public Dictionary<int, HashSet<int>> AllReverseNeighbours = new Dictionary<int, HashSet<int>>();
         public Dictionary<int, HybridDictionary> AllWeights = new Dictionary<int, HybridDictionary>();
+
+
 
         //TODO add size and trace contractions
 
@@ -196,12 +203,10 @@ namespace GPNC
             if (!nodes.Contains(id))
             {
                 nodes.Add(id);
-                HashSet<int> fromNodes = new HashSet<int>();
-                HashSet<int> toNodes = new HashSet<int>();
+                HashSet<int> reverseNeighbours = new HashSet<int>();
                 HybridDictionary weights = new HybridDictionary();
-                AllFromNodes[id] = fromNodes;
-                AllToNodes[id] = toNodes;
                 AllWeights[id] = weights;
+                AllReverseNeighbours[id] = reverseNeighbours;
             }
             return id;
         }
@@ -212,34 +217,22 @@ namespace GPNC
 
         public int Contraction(int v, int w)
         {
-            HashSet<int> toNodesW = AllToNodes[w];
-            HashSet<int> fromNodesW = AllFromNodes[w];
 
-            foreach (int x in fromNodesW)
+            foreach (int x in GetNeighbours(w))
             {
                 if (x != v)
                 {
-                    RemoveToEdge(x, w);
-                    AddFromEgde(v, x, (int)AllWeights[w][x]);
-                    AddToEgde(x, v);
-                }
-            }
-            foreach (int x in toNodesW)
-            {
-                if (x != v)
-                {
-                    AddToEgde(v, x);
-                    int weight = (int)AllWeights[x][w];
-                    RemoveFromEdge(x, w);
-                    AddFromEgde(x, v, weight);
+
+                    int weight = getWeight(w, x);
+                    RemoveEdge(x, w);
+                    AddEdge(v, x, weight);
                 }
             }
 
-            RemoveFromEdge(v, w);
-            RemoveToEdge(v, w);
+            RemoveEdge(v, w);
             RemoveNodeFromGraph(w);
-
             return v;
+
         }
 
         public void ContractList(List<int> contractionList)
@@ -257,45 +250,64 @@ namespace GPNC
                 //Console.WriteLine(id);
             }
         }
-
-        public void AddFromEgde(int id, int idOtherNode, int weight)
+        public List<int> GetNeighbours(int id)
         {
-            HybridDictionary weights = AllWeights[id];
-            if (!AllFromNodes[id].Contains(idOtherNode))
+            List<int> neighbours = new List<int>();
+            var fromNodes = AllWeights[id].Keys;
+            var toNodes = AllReverseNeighbours[id];
+            foreach (int v in fromNodes) neighbours.Add(v);
+            foreach (int w in toNodes) neighbours.Add(w);
+
+            return neighbours;
+        }
+
+        public void AddEdge(int id, int otherId, int weight)
+        {
+            int v = id > otherId ? id : otherId;
+            int w = id > otherId ? otherId : id;
+
+            if (!AllWeights[v].Contains(w))
             {
-                AllFromNodes[id].Add(idOtherNode);
-                weights[idOtherNode] = weight;
+                AllWeights[v].Add(w, weight);
+                AllReverseNeighbours[w].Add(v);
             }
             else
-                weights[idOtherNode] = (int)weights[idOtherNode] + weight;
+            {
+                AllWeights[v][w] = (int)AllWeights[v][w] + weight;
+            }
         }
-        public void AddToEgde(int id, int idOtherNode)
+        public void RemoveEdge(int id, int otherId)
         {
-            if (!AllToNodes[id].Contains(idOtherNode))
-                AllToNodes[id].Add(idOtherNode);
+            int v = id > otherId ? id : otherId;
+            int w = id > otherId ? otherId : id;
+            AllWeights[v].Remove(w);
+            AllReverseNeighbours[w].Remove(v);
         }
-        public void RemoveFromEdge(int id, int idOtherNode)
+
+        public int getWeight(int id, int otherId)
         {
-            AllFromNodes[id].Remove(idOtherNode);
-        }
-        public void RemoveToEdge(int id, int idOtherNode)
-        {
-            AllToNodes[id].Remove(idOtherNode);
+            int v = id > otherId ? id : otherId;
+            int w = id > otherId ? otherId : id;
+            return (int)AllWeights[v][w];
         }
 
 
         public void print()
         {
-            foreach (int id in nodes)
+            foreach (int id in nodes.Take(15))
             {
-                HashSet<int> fromNodes = AllFromNodes[id];
-                HashSet<int> toNodes = AllToNodes[id];
-                string from = "";
-                foreach (int x in fromNodes)
-                    from += " " + x + "::" + AllWeights[id][x];
-                string to = "";
-                foreach (int x in toNodes) to += " " + x;
-                Console.WriteLine("{0}: with fromNodes {1} and toNodes {2}", id, from, to);
+                string ws = "";
+                HybridDictionary hd = AllWeights[id];
+                foreach (int w in hd.Keys)
+                {
+                    ws += w + "::" + AllWeights[id][w] + ",";
+                }
+                string vs = "";
+                foreach (int v in AllReverseNeighbours[id])
+                {
+                    vs += v + ",";
+                }
+                Console.WriteLine("{0}  {1}  {2}", id, ws, vs);
 
             }
         }
@@ -315,20 +327,10 @@ namespace GPNC
 
             foreach (int id in G2.nodes)
             {
-                HashSet<int> fromNodes = AllFromNodes[id];
-                foreach (int nId in fromNodes)
-                {
-                    if (G2.nodes.Contains(nId))
-                    {
-                        G2.AddFromEgde(id, nId, (int)AllWeights[id][nId]);
-                    }
-                }
-                HashSet<int> toNodes = AllToNodes[id];
-                foreach (int nId in toNodes)
-                {
-                    if (G2.nodes.Contains(nId))
-                    {
-                        G2.AddToEgde(id, nId);
+                HybridDictionary hd = AllWeights[id];
+                foreach(int otherId in hd.Keys) {
+                    if (G2.nodes.Contains(otherId)) {
+                        G2.AddEdge(id, otherId, (int) AllWeights[id][otherId]);
                     }
                 }
             }
@@ -369,13 +371,8 @@ namespace GPNC
             while (queue.Count > 0 && T.Count < MaxTree)
             {
                 int currentNode = queue.Dequeue();
-                HashSet<int> fromNodes = G.AllFromNodes[currentNode];
-                foreach (int nId in fromNodes)
-                {
-                    visitNode(nId);
-                }
-                HashSet<int> toNodes = G.AllToNodes[currentNode];
-                foreach (int nId in toNodes)
+
+                foreach (int nId in G.GetNeighbours(currentNode))
                 {
                     visitNode(nId);
                 }

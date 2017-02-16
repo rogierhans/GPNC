@@ -21,7 +21,6 @@ namespace GPNC
         private List<int> SolveOnGraph(Graph G, int s, int t)
         {
             Dictionary<int, Dictionary<int, int>> arcToIndex = new Dictionary<int, Dictionary<int, int>>();
-            int numNodes = 0;
             int numArcs = 0;
             int index = 0;
             List<int> start_nodes = new List<int>();
@@ -29,15 +28,17 @@ namespace GPNC
             List<int> capacities = new List<int>();
             foreach (int n in G.nodes)
             {
-                HashSet<int> fromNodes = G.AllFromNodes[n];
-                if (fromNodes.Count > 0) numNodes++;
+                var fromNodes = G.AllWeights[n].Keys;
                 foreach (int fn in fromNodes)
                 {
                     start_nodes.Add(n);
                     end_nodes.Add(fn);
                     capacities.Add((int)G.AllWeights[n][fn]);
                     numArcs++;
-
+                    start_nodes.Add(fn);
+                    end_nodes.Add(n);
+                    capacities.Add((int)G.AllWeights[n][fn]);
+                    numArcs++;
 
                     if (!arcToIndex.ContainsKey(n))
                     {
@@ -45,12 +46,18 @@ namespace GPNC
                     }
                     arcToIndex[n][fn] = index;
                     index++;
+                    if (!arcToIndex.ContainsKey(fn))
+                    {
+                        arcToIndex[fn] = new Dictionary<int, int>();
+                    }
+                    arcToIndex[fn][n] = index;
+                    index++;
                 }
             }
             Console.WriteLine("done with arcs");
 
 
-            MaxFlow maxflow = SolveMaxFlow(s, t, numNodes, numArcs, start_nodes.ToArray(), end_nodes.ToArray(), capacities.ToArray());
+            MaxFlow maxflow = SolveMaxFlow(s, t, numArcs, start_nodes.ToArray(), end_nodes.ToArray(), capacities.ToArray());
             Console.WriteLine("done with flow");
             Queue<int> queue = new Queue<int>();
             HashSet<int> visited = new HashSet<int>();
@@ -62,9 +69,9 @@ namespace GPNC
             while (queue.Count > 0)
             {
                 int id = queue.Dequeue();
-                HashSet<int> fromNode = G.AllFromNodes[id];
+                List<int> neighbours = G.GetNeighbours(id);
 
-                foreach (int fn in fromNode)
+                foreach (int fn in neighbours)
                 {
                     if (!visited.Contains(fn))
                     {
@@ -77,20 +84,13 @@ namespace GPNC
                             visited.Add(fn);
                             result.Add(fn);
                         }
-                    }
-                }
-                HashSet<int> toNode = G.AllToNodes[id];
-                foreach (int tn in toNode)
-                {
-                    if (!visited.Contains(tn))
-                    {
-                        int i = arcToIndex[tn][id];
-                        long flow = maxflow.Flow(i);
+                        i = arcToIndex[fn][id];
+                        flow = maxflow.Flow(i);
                         if (flow > 0)
                         {
-                            queue.Enqueue(tn);
-                            visited.Add(tn);
-                            result.Add(tn);
+                            queue.Enqueue(fn);
+                            visited.Add(fn);
+                            result.Add(fn);
                         }
                     }
                 }
@@ -102,7 +102,7 @@ namespace GPNC
         }
 
 
-        private static MaxFlow SolveMaxFlow(int s, int t, int numNodes, int numArcs, int[] start_nodes, int[] end_nodes, int[] capacities)
+        private static MaxFlow SolveMaxFlow(int s, int t, int numArcs, int[] start_nodes, int[] end_nodes, int[] capacities)
         {
             // Define three parallel arrays: start_nodes, end_nodes, and the capacities
             // between each pair. For instance, the arc from node 0 to node 1 has a
@@ -120,7 +120,7 @@ namespace GPNC
                                                      capacities[i]);
                 if (arc != i) throw new Exception("Internal error");
             }
-            int source = s;
+int source = s;
             int sink = t;
 
 
