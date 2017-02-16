@@ -7,6 +7,7 @@ using System.Collections.Specialized;
 using System.Drawing;
 using System.IO;
 using System.Drawing.Imaging;
+using System.Reflection;
 
 
 namespace GPNC
@@ -18,15 +19,49 @@ namespace GPNC
 
 
             Graph G = Parser.ParseCSVFile();
+            BFS bfs = new BFS(G, G.nodes.Count, 1, 10, 1);
+            Console.WriteLine(G.nodes.Count);
+            G = G.CreateSubGraph(bfs.SubGraph);
+            HashSet<int> possibleOneEdge = new HashSet<int>();
+            foreach (int id in G.nodes.ToList())
+            {
+                List<int> neighbours = G.GetNeighbours(id);
+                if (neighbours.Count == 1)
+                {
+                    possibleOneEdge.Add(G.Contraction(neighbours[0], id));
+                }
+            }
+            Console.WriteLine(G.nodes.Count);
+            Console.WriteLine(possibleOneEdge.Count);
+            while (possibleOneEdge.Count > 0)
+            {
+                List<int> loopList = possibleOneEdge.ToList();
+                possibleOneEdge = new HashSet<int>();
+                foreach (int id in loopList)
+                {
+                    List<int> neighbours = G.GetNeighbours(id);
+                    if (neighbours.Count == 1)
+                    {
+                        possibleOneEdge.Add(G.Contraction(neighbours[0], id));
+                    }
+                }
+                Console.WriteLine(G.nodes.Count);
+                Console.WriteLine(possibleOneEdge.Count);
+            }
+
+
             G.print();
+            //Console.ReadLine();
+
+
+
+
             //List<int> test = G.nodes.Skip(5).Take(100000).ToList();
             //Console.ReadLine();
             //G.ContractList(test);
 
 
-            BFS bfs = new BFS(G, G.nodes.Count, 1, 10, 1);
 
-            G = G.CreateSubGraph(bfs.SubGraph);
 
             //int dedend = 0;
             //G.nodes.ToList().ForEach(x => { if (G.AllFromNodes[x].Count + G.AllToNodes[x].Count == 1) dedend++; });
@@ -67,34 +102,60 @@ namespace GPNC
                 allNodes.Add(id);
             }
             Random rnd = new Random();
+            List<List<int>> ps = new List<List<int>>();
             while (allNodes.Count > 0)
             {
                 int rInt = allNodes.ToList()[rnd.Next(allNodes.Count)];
                 Console.WriteLine("random node" + rInt);
-                List<int> p = createPartition(nodes, G, rInt);
+                List<int> p = createPartition(null, G, rInt);
                 p.ForEach(x => allNodes.Remove(x));
+                ps.Add(p);
                 Console.WriteLine(allNodes.Count + "to GO");
-                Console.ReadLine();
+                //Console.ReadLine();
+                //System.GC.Collect();
             }
-
-
-
-            Console.ReadLine();
+            int counter = 0;
+            Dictionary<int, string> idToLabel = new Dictionary<int, string>();
+            foreach (int id in G.nodes)
+            {
+                idToLabel[id] = "";
+            }
+            foreach (List<int> p in ps)
+            {
+                foreach (int id in p)
+                {
+                    idToLabel[id] = idToLabel[id] + counter + ".";
+                }
+                counter++;
+            }
+            Dictionary<string, List<int>> labelToSet = new Dictionary<string, List<int>>();
+            foreach (var kvp in idToLabel)
+            {
+                if (!labelToSet.ContainsKey(kvp.Value))
+                {
+                    List<int> list = new List<int>();
+                    labelToSet[kvp.Value] = list;
+                    labelToSet[kvp.Value].Add(kvp.Key);
+                }
+                labelToSet[kvp.Value].Add(kvp.Key);
+            }
+            Console.WriteLine("letsog");
+            labelToSet.Keys.ToList().ForEach(x => Console.WriteLine(x));
+            printPS(nodes, labelToSet.Values.ToList(), "000aaap");
         }
 
         static int i = 0;
         public static List<int> createPartition(Dictionary<int, NodePoint> nodes, Graph G, int startNode)
         {
-            BFS bfs = new BFS(G, 250000, 1, 10, startNode);
+            BFS bfs = new BFS(G, 100000, 1, 10, startNode);
             Console.WriteLine("Core size:" + bfs.Core.Count);
             Console.WriteLine("Contains random node: " + bfs.Core.Contains(startNode));
             Graph G2 = G.CreateSubGraph(bfs.SubGraph);
-            MinCut minCut = new MinCut(G2, bfs.Core, bfs.Ring);
-
-            test(nodes, bfs.T, minCut.partition, bfs.Core, i++ + "");
-            smallPicturetest(nodes, bfs.T, minCut.partition,bfs.Core, i++ + "");
+            List<int> part = MinCut.partition(G2, bfs.Core, bfs.Ring);
+            //test(nodes, bfs.T, part, bfs.Core, i++ + "");
+            //smallPicturetest(nodes, bfs.T, part, bfs.Core, i++ + "");
             Console.WriteLine("created Picture");
-            return minCut.partition;
+            return part;
         }
 
         public static void exportIds(List<int> ids, string nameFile)
@@ -108,7 +169,6 @@ namespace GPNC
             System.IO.File.WriteAllLines("F:\\Users\\Rogier\\Desktop\\" + nameFile + ".csv", strings);
         }
 
-        static Graphics grap;
         public static void test(Dictionary<int, NodePoint> nodes, List<int> subGraph, List<int> partition, List<int> core, String filename)
         {
 
@@ -120,7 +180,6 @@ namespace GPNC
             {
                 gr.FillRectangle(Brushes.Red, np.x, np.y, 1, 1);
             }
-            grap = gr;
 
             subGraph.ForEach(n =>
             {
@@ -141,6 +200,44 @@ namespace GPNC
                 filename + "a.png";
             bmp.Save(path);
 
+        }
+
+        public static void printPS(Dictionary<int, NodePoint> nodes, List<List<int>> ps, String filename)
+        {
+            var bmp = new Bitmap(1000, 1000);
+            var gr = Graphics.FromImage(bmp);
+            foreach (List<int> p in ps)
+            {
+                NodePoint cntnp = nodes[p.First()];
+                Pen pen = new Pen(randomColor());
+                p.ForEach(n =>
+
+
+                {
+
+                    NodePoint np = nodes[n];
+                    //gr.FillRectangle(randomColor(), np.x, np.y, 1, 1);
+                gr.DrawLine(pen, np.x, np.y, cntnp.x, cntnp.y);
+                });
+                var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
+filename + ".png";
+                bmp.Save(path);
+            }
+
+        }
+
+        public static Color randomColor()
+        {
+            Random r = new Random();
+            Color result;
+            double rd = r.NextDouble();
+            if (rd < 0.2) { result = Color.Red; }
+            else if (rd < 0.4) { result = Color.Blue; }
+            else if (rd < 0.6) { result = Color.Green; }
+            else if (rd < 0.8) { result = Color.White; }
+            else { result = Color.Yellow; }
+
+            return result;
         }
 
         public static void smallPicturetest(Dictionary<int, NodePoint> nodes, List<int> subGraph, List<int> partition, List<int> core, String filename)
@@ -193,6 +290,8 @@ namespace GPNC
 
         public Dictionary<int, HashSet<int>> AllReverseNeighbours = new Dictionary<int, HashSet<int>>();
         public Dictionary<int, HybridDictionary> AllWeights = new Dictionary<int, HybridDictionary>();
+        public Dictionary<int, int> Size = new Dictionary<int, int>();
+        public Dictionary<int, int> Parent = new Dictionary<int, int>();
 
 
 
@@ -207,6 +306,7 @@ namespace GPNC
                 HybridDictionary weights = new HybridDictionary();
                 AllWeights[id] = weights;
                 AllReverseNeighbours[id] = reverseNeighbours;
+                Size[id] = 1;
             }
             return id;
         }
@@ -231,6 +331,8 @@ namespace GPNC
 
             RemoveEdge(v, w);
             RemoveNodeFromGraph(w);
+            Size[v] += Size[w];
+            Parent[w] = v;
             return v;
 
         }
@@ -328,9 +430,11 @@ namespace GPNC
             foreach (int id in G2.nodes)
             {
                 HybridDictionary hd = AllWeights[id];
-                foreach(int otherId in hd.Keys) {
-                    if (G2.nodes.Contains(otherId)) {
-                        G2.AddEdge(id, otherId, (int) AllWeights[id][otherId]);
+                foreach (int otherId in hd.Keys)
+                {
+                    if (G2.nodes.Contains(otherId))
+                    {
+                        G2.AddEdge(id, otherId, (int)AllWeights[id][otherId]);
                     }
                 }
             }
@@ -351,11 +455,13 @@ namespace GPNC
         Graph G;
         int MaxTree;
         int MaxCore;
+        int Size;
         public BFS(Graph g, int U, double alpha, double f, int startNode)
         {
             G = g;
             MaxTree = (int)(U * alpha);
             MaxCore = (int)((double)U / f);
+            Size = 0;
             run(startNode);
         }
 
@@ -368,7 +474,7 @@ namespace GPNC
         {
             visitNode(startNode);
 
-            while (queue.Count > 0 && T.Count < MaxTree)
+            while (queue.Count > 0 && Size < MaxTree)
             {
                 int currentNode = queue.Dequeue();
 
@@ -386,6 +492,7 @@ namespace GPNC
         {
             if (!visited.Contains(v))
             {
+                Size += G.Size[v];
                 queue.Enqueue(v);
                 if (Core.Count < MaxCore)
                 {
