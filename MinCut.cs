@@ -9,8 +9,8 @@ namespace GPNC
 {
     class MinCut
     {
-
-        public static List<int> partition(Graph G, List<int> core, List<int> ring)
+        public List<Edge> cut = new List<Edge>();
+        public List<int> partition(Graph G, List<int> core, List<int> ring)
         {
             G.ContractList(core);
             G.ContractList(ring);
@@ -18,7 +18,7 @@ namespace GPNC
             return result.Union(core).ToList();
         }
 
-        private static List<int> SolveOnGraph(Graph G, int s, int t)
+        private List<int> SolveOnGraph(Graph G, int s, int t)
         {
             Dictionary<int, Dictionary<int, int>> arcToIndex = new Dictionary<int, Dictionary<int, int>>();
             int index = 0;
@@ -72,13 +72,15 @@ namespace GPNC
                             visited.Add(fn);
                             result.Add(fn);
                         }
-                        i = arcToIndex[fn][id];
-                        flow = maxFlow.Flow(i);
-                        if (flow > 0)
+                        else if (maxFlow.Flow(arcToIndex[fn][id]) > 0)
                         {
                             queue.Enqueue(fn);
                             visited.Add(fn);
                             result.Add(fn);
+                        }
+                        else {
+                            Edge e = new Edge(id,fn);
+                            cut.Add(e);
                         }
                     }
                 }

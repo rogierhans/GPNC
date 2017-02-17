@@ -17,40 +17,12 @@ namespace GPNC
         static void Main(string[] args)
         {
 
-
             Graph G = Parser.ParseCSVFile();
-            BFS bfs = new BFS(G, G.nodes.Count, 1, 10, 1);
-            Console.WriteLine(G.nodes.Count);
-            G = G.CreateSubGraph(bfs.SubGraph);
-            HashSet<int> possibleOneEdge = new HashSet<int>();
-            foreach (int id in G.nodes.ToList())
-            {
-                List<int> neighbours = G.GetNeighbours(id);
-                if (neighbours.Count == 1)
-                {
-                    possibleOneEdge.Add(G.Contraction(neighbours[0], id));
-                }
-            }
-            Console.WriteLine(G.nodes.Count);
-            Console.WriteLine(possibleOneEdge.Count);
-            while (possibleOneEdge.Count > 0)
-            {
-                List<int> loopList = possibleOneEdge.ToList();
-                possibleOneEdge = new HashSet<int>();
-                foreach (int id in loopList)
-                {
-                    List<int> neighbours = G.GetNeighbours(id);
-                    if (neighbours.Count == 1)
-                    {
-                        possibleOneEdge.Add(G.Contraction(neighbours[0], id));
-                    }
-                }
-                Console.WriteLine(G.nodes.Count);
-                Console.WriteLine(possibleOneEdge.Count);
-            }
-
-
-            G.print();
+            G = Filter.ConnectedComponent(G);
+            G = Filter.RemoveOneDegree(G);
+           HashSet < Edge > cuts= NaturalCut.MakeCuts(G);
+            Console.WriteLine("lastTSTep");
+            List<List<int>> ps = FindPartions(G, cuts);
             //Console.ReadLine();
 
 
@@ -96,68 +68,52 @@ namespace GPNC
 
             Dictionary<int, NodePoint> nodes = Parser.ParseNodes(G);
 
-            HashSet<int> allNodes = new HashSet<int>();
-            foreach (int id in G.nodes)
-            {
-                allNodes.Add(id);
-            }
-            Random rnd = new Random();
+            printPS(nodes, ps, "000aaap");
+        }
+
+        private static List<List<int>> FindPartions(Graph G, HashSet<Edge> cuts)
+        {
             List<List<int>> ps = new List<List<int>>();
-            while (allNodes.Count > 0)
-            {
-                int rInt = allNodes.ToList()[rnd.Next(allNodes.Count)];
-                Console.WriteLine("random node" + rInt);
-                List<int> p = createPartition(null, G, rInt);
+            HashSet<int> allNodes = new HashSet<int>();
+            G.nodes.ToList().ForEach(x => allNodes.Add(x));
+
+            while (allNodes.Count > 0) {
+                int rID = RandomID(allNodes);
+                List<int> p = partitioning(G, cuts, rID);
                 p.ForEach(x => allNodes.Remove(x));
                 ps.Add(p);
-                Console.WriteLine(allNodes.Count + "to GO");
-                //Console.ReadLine();
-                //System.GC.Collect();
+                Console.WriteLine(allNodes.Count);
             }
-            int counter = 0;
-            Dictionary<int, string> idToLabel = new Dictionary<int, string>();
-            foreach (int id in G.nodes)
-            {
-                idToLabel[id] = "";
-            }
-            foreach (List<int> p in ps)
-            {
-                foreach (int id in p)
-                {
-                    idToLabel[id] = idToLabel[id] + counter + ".";
+            return ps; 
+        }
+        private static List<int> partitioning(Graph G, HashSet<Edge> cuts, int startNode) {
+            List<int> p = new List<int>();
+            Queue<int> queue = new Queue<int>();
+            HashSet<int> visited = new HashSet<int>();
+            queue.Enqueue(startNode);
+            visited.Add(startNode);
+            p.Add(startNode);
+            while (queue.Count > 0) {
+                int currentNode = queue.Dequeue();
+                var neighbours =G.GetNeighbours(currentNode);
+                foreach (int id in neighbours) {
+                    if (!visited.Contains(id) && !cuts.Contains(new Edge(currentNode,id))) {
+                        p.Add(id);
+                        visited.Add(id);
+                        queue.Enqueue(id);
+                    }
                 }
-                counter++;
             }
-            Dictionary<string, List<int>> labelToSet = new Dictionary<string, List<int>>();
-            foreach (var kvp in idToLabel)
-            {
-                if (!labelToSet.ContainsKey(kvp.Value))
-                {
-                    List<int> list = new List<int>();
-                    labelToSet[kvp.Value] = list;
-                    labelToSet[kvp.Value].Add(kvp.Key);
-                }
-                labelToSet[kvp.Value].Add(kvp.Key);
-            }
-            Console.WriteLine("letsog");
-            labelToSet.Keys.ToList().ForEach(x => Console.WriteLine(x));
-            printPS(nodes, labelToSet.Values.ToList(), "000aaap");
+
+
+            return p;
         }
 
-        static int i = 0;
-        public static List<int> createPartition(Dictionary<int, NodePoint> nodes, Graph G, int startNode)
+        private static int RandomID(HashSet<int> allNodes)
         {
-            BFS bfs = new BFS(G, 100000, 1, 10, startNode);
-            Console.WriteLine("Core size:" + bfs.Core.Count);
-            Console.WriteLine("Contains random node: " + bfs.Core.Contains(startNode));
-            Graph G2 = G.CreateSubGraph(bfs.SubGraph);
-            List<int> part = MinCut.partition(G2, bfs.Core, bfs.Ring);
-            //test(nodes, bfs.T, part, bfs.Core, i++ + "");
-            //smallPicturetest(nodes, bfs.T, part, bfs.Core, i++ + "");
-            Console.WriteLine("created Picture");
-            return part;
+            Random rnd = new Random();
+            return allNodes.ToList()[rnd.Next(allNodes.Count)];
         }
-
         public static void exportIds(List<int> ids, string nameFile)
         {
             String[] strings = new String[ids.Count];
@@ -516,6 +472,21 @@ filename + ".png";
         public int y;
         public int lati;
         public int longi;
+    }
+
+    public struct Edge {
+        public int From;
+        public int To;
+
+        public Edge(int from, int to) {
+            this.From = from< to? from :to;
+            this.To = from < to ? to : from;
+
+        }
+        public override string ToString()
+        {
+            return ("("+From.ToString() +","+To.ToString() + ")");
+        }
     }
 
 }
