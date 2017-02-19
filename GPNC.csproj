@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Filter.cs" />
+    <Compile Include="Greedy.cs" />
     <Compile Include="MinCut.cs" />
     <Compile Include="NaturalCut.cs" />
     <Compile Include="Parser.cs" />

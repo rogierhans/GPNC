@@ -18,11 +18,28 @@ namespace GPNC
         {
 
             Graph G = Parser.ParseCSVFile();
+            Console.WriteLine(G.nodes.Count);
             G = Filter.ConnectedComponent(G);
-            G = Filter.RemoveOneDegree(G);
-           HashSet < Edge > cuts= NaturalCut.MakeCuts(G);
+            Graph OG = G.CreateSubGraph(G.nodes.ToList());
+            Console.WriteLine(G.nodes.Count);
+            int U = G.nodes.Count / 6;
+            Console.WriteLine(U);
+            Dictionary<int, NodePoint> nodes = Parser.ParseNodes(G);
+            Filter.RemoveOneDegree(G);
+            Console.WriteLine(G.nodes.Count);
+            Filter.RemoveTwoDegree(G);
+            Console.WriteLine(G.nodes.Count);
+
+            HashSet<Edge> cuts = NaturalCut.MakeCuts(G, U);
             Console.WriteLine("lastTSTep");
-            List<List<int>> ps = FindPartions(G, cuts);
+            List<List<int>> ps = FindPartions(G, cuts, U);
+            ps.ForEach(x => { int v = G.ContractList(x); });
+            Console.WriteLine(G.nodes.Count);
+            Greedy.initPar(G, U);
+            G.print();
+            Console.WriteLine(G.nodes.Count);
+            print(G, nodes);
+
             //Console.ReadLine();
 
 
@@ -65,45 +82,159 @@ namespace GPNC
 
             //Graph G2 = G.CreateSubGraph(G.nodes.Take(10000).ToList());
             //G2.print();
+            int weight = 0;
+            G.GetAllArcs().ForEach(e => weight += G.getWeight(e.To, e.From));
+            Dictionary<int, HashSet<int>> realPS = new Dictionary<int, HashSet<int>>();
+            foreach (int id in OG.nodes)
+            {
+                int currentNode = id;
+                while (!G.nodes.Contains(currentNode))
+                {
+                    currentNode = G.Parent[currentNode];
+                }
+                if (!realPS.ContainsKey(currentNode))
+                {
+                    HashSet<int> par = new HashSet<int>();
+                    realPS[currentNode] = par;
+                }
+                realPS[currentNode].Add(id);
+            }
+            foreach (var kvp in realPS)
+            {
+                Console.WriteLine(kvp.Key + " " + kvp.Value.Count);
+            }
+            //Console.ReadLine();
+            Console.WriteLine("letsgooooooo");
+            List<Edge> realEdges = new List<Edge>();
+            foreach (Edge e in G.GetAllArcs())
+            {
+                HashSet<int> par1 = realPS[e.To];
+                HashSet<int> par2 = realPS[e.From];
+                foreach (int pe in par1)
+                {
+                    foreach (int n in OG.GetNeighbours(pe))
+                    {
+                        if (par2.Contains(n))
+                        {
+                            realEdges.Add(new Edge(pe, n));
+                        }
+                    }
+                }
 
-            Dictionary<int, NodePoint> nodes = Parser.ParseNodes(G);
+            }
 
-            printPS(nodes, ps, "000aaap");
+            foreach (Edge e in G.GetAllArcs())
+            {
+                HashSet<int> par1 = realPS[e.To];
+                HashSet<int> par2 = realPS[e.From];
+                smallPicturetest(OG, nodes, par1, par2, realEdges, e.To + "" + e.From);
+            }
+            Console.WriteLine("Weight:{0}", weight);
+            testo(nodes, realEdges, "0000REALFUCK");
+            Console.ReadLine();
+            //nodes = Parser.ParseNodes(G);
+            //test(nodes, G.nodes.ToList(), G.nodes.ToList(), G.nodes.ToList(), "00james");
+            //printPS(nodes, ps, "000aaap");
+        }
+        public static void testo(Dictionary<int, NodePoint> nodes, List<Edge> cuts, String filename)
+        {
+
+            var bmp = new Bitmap(1000, 1000);
+            var gr = Graphics.FromImage(bmp);
+
+
+            foreach (NodePoint np in nodes.Values)
+            {
+                gr.FillRectangle(Brushes.Red, np.x, np.y, 1, 1);
+            }
+
+            foreach (Edge e in cuts)
+            {
+                int v = e.To;
+                int w = e.From;
+                NodePoint np1 = nodes[v];
+                NodePoint np2 = nodes[w];
+                gr.DrawLine(new Pen(Color.Blue, 5), np1.x, np1.y, np2.x, np2.y);
+
+            }
+            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
+                filename + "a.png";
+            bmp.Save(path);
+
+
+        }
+        private static void print(Graph G, Dictionary<int, NodePoint> nodes)
+        {
+            var bmp = new Bitmap(1000, 1000);
+            var gr = Graphics.FromImage(bmp);
+            Random r = new Random();
+            Dictionary<int, Brush> pens = new Dictionary<int, Brush>();
+            foreach (int id in G.nodes)
+            {
+
+                Brush pen = randomBrush(r);
+                pens[id] = pen;
+            }
+            foreach (var kvp in nodes)
+            {
+                NodePoint np = kvp.Value;
+                int currentId = kvp.Key;
+                while (!pens.ContainsKey(currentId))
+                {
+                    currentId = G.Parent[currentId];
+
+                }
+                Brush pen = pens[currentId];
+                NodePoint cntnp = nodes[currentId];
+                gr.FillRectangle(pen, np.x, np.y, 1, 1);
+            }
+            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
+            "RESULT" + "a.png";
+            bmp.Save(path);
         }
 
-        private static List<List<int>> FindPartions(Graph G, HashSet<Edge> cuts)
+
+        private static List<List<int>> FindPartions(Graph G, HashSet<Edge> cuts, int U)
         {
             List<List<int>> ps = new List<List<int>>();
             HashSet<int> allNodes = new HashSet<int>();
             G.nodes.ToList().ForEach(x => allNodes.Add(x));
 
-            while (allNodes.Count > 0) {
+            while (allNodes.Count > 0)
+            {
                 int rID = RandomID(allNodes);
-                List<int> p = partitioning(G, cuts, rID);
+                List<int> p = partitioning(G, cuts, rID, U);
                 p.ForEach(x => allNodes.Remove(x));
                 ps.Add(p);
-                Console.WriteLine(allNodes.Count);
             }
-            return ps; 
+            return ps;
         }
-        private static List<int> partitioning(Graph G, HashSet<Edge> cuts, int startNode) {
+        private static List<int> partitioning(Graph G, HashSet<Edge> cuts, int startNode, int U)
+        {
             List<int> p = new List<int>();
             Queue<int> queue = new Queue<int>();
             HashSet<int> visited = new HashSet<int>();
             queue.Enqueue(startNode);
             visited.Add(startNode);
             p.Add(startNode);
-            while (queue.Count > 0) {
+            while (queue.Count > 0)
+            {
                 int currentNode = queue.Dequeue();
-                var neighbours =G.GetNeighbours(currentNode);
-                foreach (int id in neighbours) {
-                    if (!visited.Contains(id) && !cuts.Contains(new Edge(currentNode,id))) {
+                var neighbours = G.GetNeighbours(currentNode);
+                foreach (int id in neighbours)
+                {
+                    if (!visited.Contains(id) && !cuts.Contains(new Edge(currentNode, id)))
+                    {
                         p.Add(id);
                         visited.Add(id);
                         queue.Enqueue(id);
                     }
                 }
             }
+            int size = 0;
+            p.ForEach(x => size += G.Size[x]);
+            if (size > U)
+                Console.WriteLine(size + "Size");
 
 
             return p;
@@ -125,66 +256,12 @@ namespace GPNC
             System.IO.File.WriteAllLines("F:\\Users\\Rogier\\Desktop\\" + nameFile + ".csv", strings);
         }
 
-        public static void test(Dictionary<int, NodePoint> nodes, List<int> subGraph, List<int> partition, List<int> core, String filename)
+
+
+
+
+        public static Color randomColor(Random r)
         {
-
-            var bmp = new Bitmap(1000, 1000);
-            var gr = Graphics.FromImage(bmp);
-
-
-            foreach (NodePoint np in nodes.Values)
-            {
-                gr.FillRectangle(Brushes.Red, np.x, np.y, 1, 1);
-            }
-
-            subGraph.ForEach(n =>
-            {
-                NodePoint np = nodes[n];
-                gr.FillRectangle(Brushes.Yellow, np.x, np.y, 1, 1);
-            });
-            partition.ForEach(n =>
-            {
-                NodePoint np = nodes[n];
-                gr.FillRectangle(Brushes.Blue, np.x, np.y, 1, 1);
-            });
-            core.ForEach(n =>
-            {
-                NodePoint np = nodes[n];
-                gr.FillRectangle(Brushes.Green, np.x, np.y, 1, 1);
-            });
-            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
-                filename + "a.png";
-            bmp.Save(path);
-
-        }
-
-        public static void printPS(Dictionary<int, NodePoint> nodes, List<List<int>> ps, String filename)
-        {
-            var bmp = new Bitmap(1000, 1000);
-            var gr = Graphics.FromImage(bmp);
-            foreach (List<int> p in ps)
-            {
-                NodePoint cntnp = nodes[p.First()];
-                Pen pen = new Pen(randomColor());
-                p.ForEach(n =>
-
-
-                {
-
-                    NodePoint np = nodes[n];
-                    //gr.FillRectangle(randomColor(), np.x, np.y, 1, 1);
-                gr.DrawLine(pen, np.x, np.y, cntnp.x, cntnp.y);
-                });
-                var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
-filename + ".png";
-                bmp.Save(path);
-            }
-
-        }
-
-        public static Color randomColor()
-        {
-            Random r = new Random();
             Color result;
             double rd = r.NextDouble();
             if (rd < 0.2) { result = Color.Red; }
@@ -196,30 +273,68 @@ filename + ".png";
             return result;
         }
 
-        public static void smallPicturetest(Dictionary<int, NodePoint> nodes, List<int> subGraph, List<int> partition, List<int> core, String filename)
+        public static Brush randomBrush(Random r)
+        {
+            Brush result;
+            double rd = r.NextDouble();
+            if (rd < 0.2) { result = Brushes.Red; }
+            else if (rd < 0.4) { result = Brushes.Blue; }
+            else if (rd < 0.6) { result = Brushes.Green; }
+            else if (rd < 0.8) { result = Brushes.White; }
+            else { result = Brushes.Yellow; }
+
+            return result;
+        }
+
+        public static void smallPicturetest(Graph OG,Dictionary<int, NodePoint> nodes, HashSet<int> par1, HashSet<int> par2, List<Edge> cuts, String filename)
         {
             var bmp = new Bitmap(1000, 1000);
             var gr = Graphics.FromImage(bmp);
+            List<int> subGraph = par1.Union(par2).ToList();
             int maxLati = subGraph.Max(x => nodes[x].lati);
             int minLati = subGraph.Min(x => nodes[x].lati);
             int maxLongi = subGraph.Max(x => nodes[x].longi);
             int minLongi = subGraph.Min(x => nodes[x].longi);
-            subGraph.ForEach(n =>
+            Graph subOG = OG.CreateSubGraph(subGraph);
+            List<Edge> subEdges = subOG.GetAllArcs();
+            subEdges.ForEach(e =>
             {
-                NodePoint np = nodes[n];
-                gr.FillRectangle(Brushes.Yellow, calcX(np, minLongi, maxLongi), calcY(np, minLati, maxLati), 1, 1);
+                int v = e.To;
+                int w = e.From;
+                NodePoint np1 = nodes[v];
+                NodePoint np2 = nodes[w];
+                gr.DrawLine(new Pen(Color.Yellow), calcX(np1, minLongi, maxLongi), calcY(np1, minLati, maxLati), calcX(np2, minLongi, maxLongi), calcY(np2, minLati, maxLati));
             });
-            partition.ForEach(n =>
+            subOG = OG.CreateSubGraph(par1.ToList());
+            subEdges = subOG.GetAllArcs();
+            subEdges.ForEach(e =>
             {
-                NodePoint np = nodes[n];
-                gr.FillRectangle(Brushes.Blue, calcX(np, minLongi, maxLongi), calcY(np, minLati, maxLati), 1, 1);
+                int v = e.To;
+                int w = e.From;
+                NodePoint np1 = nodes[v];
+                NodePoint np2 = nodes[w];
+                gr.DrawLine(new Pen(Color.Red), calcX(np1, minLongi, maxLongi), calcY(np1, minLati, maxLati), calcX(np2, minLongi, maxLongi), calcY(np2, minLati, maxLati));
             });
-            core.ForEach(n =>
+            subOG = OG.CreateSubGraph(par2.ToList());
+            subEdges = subOG.GetAllArcs();
+            subEdges.ForEach(e =>
             {
-                NodePoint np = nodes[n];
-                gr.FillRectangle(Brushes.Green, calcX(np, minLongi, maxLongi), calcY(np, minLati, maxLati), 1, 1);
+                int v = e.To;
+                int w = e.From;
+                NodePoint np1 = nodes[v];
+                NodePoint np2 = nodes[w];
+                gr.DrawLine(new Pen(Color.Green), calcX(np1, minLongi, maxLongi), calcY(np1, minLati, maxLati), calcX(np2, minLongi, maxLongi), calcY(np2, minLati, maxLati));
             });
-            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
+            foreach (Edge e in cuts)
+            {
+                int v = e.To;
+                int w = e.From;
+                NodePoint np1 = nodes[v];
+                NodePoint np2 = nodes[w];
+                gr.DrawLine(new Pen(Color.Blue, 2), calcX(np1, minLongi, maxLongi), calcY(np1, minLati, maxLati), calcX(np2, minLongi, maxLongi), calcY(np2, minLati, maxLati));
+
+            }
+            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\01z" +
     filename + "b.png";
             bmp.Save(path);
         }
@@ -244,14 +359,11 @@ filename + ".png";
         public HashSet<int> nodes = new HashSet<int>();
 
 
-        public Dictionary<int, HashSet<int>> AllReverseNeighbours = new Dictionary<int, HashSet<int>>();
-        public Dictionary<int, HybridDictionary> AllWeights = new Dictionary<int, HybridDictionary>();
+        private Dictionary<int, HashSet<int>> AllReverseNeighbours = new Dictionary<int, HashSet<int>>();
+        private Dictionary<int, Dictionary<int,int>> AllWeights = new Dictionary<int, Dictionary<int, int>>();
         public Dictionary<int, int> Size = new Dictionary<int, int>();
         public Dictionary<int, int> Parent = new Dictionary<int, int>();
 
-
-
-        //TODO add size and trace contractions
 
         public int AddNodeToGraph(int id)
         {
@@ -259,7 +371,7 @@ filename + ".png";
             {
                 nodes.Add(id);
                 HashSet<int> reverseNeighbours = new HashSet<int>();
-                HybridDictionary weights = new HybridDictionary();
+                Dictionary<int, int> weights = new Dictionary<int, int>();
                 AllWeights[id] = weights;
                 AllReverseNeighbours[id] = reverseNeighbours;
                 Size[id] = 1;
@@ -293,7 +405,7 @@ filename + ".png";
 
         }
 
-        public void ContractList(List<int> contractionList)
+        public int ContractList(List<int> contractionList)
         {
 
             if (nodes.Count <= 1)
@@ -307,16 +419,21 @@ filename + ".png";
                 //print();
                 //Console.WriteLine(id);
             }
+            return first;
         }
         public List<int> GetNeighbours(int id)
         {
-            List<int> neighbours = new List<int>();
-            var fromNodes = AllWeights[id].Keys;
-            var toNodes = AllReverseNeighbours[id];
-            foreach (int v in fromNodes) neighbours.Add(v);
-            foreach (int w in toNodes) neighbours.Add(w);
+            return AllWeights[id].Keys.Concat(AllReverseNeighbours[id]).ToList();
+        }
 
-            return neighbours;
+        public Tuple<Dictionary<int, int>.KeyCollection, HashSet<int>> GetNeighboursFast(int id)
+        {
+            var from = AllWeights[id].Keys;
+
+            var to = AllReverseNeighbours[id];
+
+
+            return new Tuple<Dictionary<int, int>.KeyCollection, HashSet<int>>(from, to);
         }
 
         public void AddEdge(int id, int otherId, int weight)
@@ -324,7 +441,7 @@ filename + ".png";
             int v = id > otherId ? id : otherId;
             int w = id > otherId ? otherId : id;
 
-            if (!AllWeights[v].Contains(w))
+            if (!AllWeights[v].ContainsKey(w))
             {
                 AllWeights[v].Add(w, weight);
                 AllReverseNeighbours[w].Add(v);
@@ -349,24 +466,57 @@ filename + ".png";
             return (int)AllWeights[v][w];
         }
 
+        public bool IsEdge(int id, int otherId)
+        {
+            int v = id > otherId ? id : otherId;
+            int w = id > otherId ? otherId : id;
+            return AllWeights[v].ContainsKey(w);
+        }
 
+        public List<Edge> GetAllArcs()
+        {
+            List<Edge> arcs = new List<Edge>();
+            foreach (var kvp in AllReverseNeighbours)
+            {
+                foreach (int id in kvp.Value)
+                {
+                    arcs.Add(new Edge(id, kvp.Key));
+                }
+            }
+            return arcs;
+
+        }
+        public List<Edge> GetAllArcs(int U)
+        {
+            List<Edge> arcs = new List<Edge>();
+            foreach (var kvp in AllReverseNeighbours)
+            {
+                foreach (int id in kvp.Value)
+                {
+                    int size = Size[kvp.Key] + Size[id];
+                    if (size <= U)
+                        arcs.Add(new Edge(id, kvp.Key));
+                }
+            }
+            return arcs;
+
+        }
+        public int GetDegree(int id)
+        {
+            return GetNeighbours(id).Count;
+        }
         public void print()
         {
-            foreach (int id in nodes.Take(15))
+            foreach (int id in nodes)
             {
-                string ws = "";
-                HybridDictionary hd = AllWeights[id];
-                foreach (int w in hd.Keys)
+                string s = id + "(" + Size[id] + ")" + ": ";
+                foreach (int n in GetNeighbours(id))
                 {
-                    ws += w + "::" + AllWeights[id][w] + ",";
-                }
-                string vs = "";
-                foreach (int v in AllReverseNeighbours[id])
-                {
-                    vs += v + ",";
-                }
-                Console.WriteLine("{0}  {1}  {2}", id, ws, vs);
+                    s += n + "(" + Size[n] + ")";
 
+
+                }
+                Console.WriteLine(s);
             }
         }
         public Graph CreateSubGraph(List<int> ids)
@@ -385,7 +535,7 @@ filename + ".png";
 
             foreach (int id in G2.nodes)
             {
-                HybridDictionary hd = AllWeights[id];
+                Dictionary<int, int> hd = AllWeights[id];
                 foreach (int otherId in hd.Keys)
                 {
                     if (G2.nodes.Contains(otherId))
@@ -474,19 +624,36 @@ filename + ".png";
         public int longi;
     }
 
-    public struct Edge {
+    public struct Edge
+    {
         public int From;
         public int To;
 
-        public Edge(int from, int to) {
-            this.From = from< to? from :to;
+        public Edge(int from, int to)
+        {
+            this.From = from < to ? from : to;
             this.To = from < to ? to : from;
 
         }
         public override string ToString()
         {
-            return ("("+From.ToString() +","+To.ToString() + ")");
+            return ("(" + From.ToString() + "," + To.ToString() + ")");
         }
+        public override int GetHashCode()
+        {
+            return ((23 * 31) + From * 31) + To;
+        }
+
+
     }
+    //class SubGraph {
+    //    Graph G;
+    //    public SubGraph(Graph g) {
+    //        G = 
+    //    }
+
+    //}
+
+
 
 }
