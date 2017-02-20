@@ -15,12 +15,13 @@ namespace GPNC
     class MinCut
     {
         public List<Edge> cut = new List<Edge>();
-        public List<int> partition(Graph OG,Graph G, List<int> core, List<int> ring)
+        public List<int> partition(Graph OriginalG, Graph G, List<int> core, List<int> ring)
         {
             G.ContractList(core);
             G.ContractList(ring);
-            List<int> result = SolveOnGraph(OG,G, core.First(), ring.First(),core,ring);
-            return result.Union(core).ToList();
+            List<int> result = SolveOnGraph(OriginalG, G, core.First(), ring.First(),core,ring);
+            //return core;
+            return core.Union(result).ToList();
         }
 
         private List<int> SolveOnGraph(Graph OriginalG, Graph G, int s, int t, List<int> core, List<int> ring)
@@ -28,6 +29,8 @@ namespace GPNC
             Dictionary<int, Dictionary<int, int>> arcToIndex = new Dictionary<int, Dictionary<int, int>>();
             int index = 0;
             MaxFlow maxFlow = new MaxFlow();
+
+            //add arcs to Google OrTools
             foreach (int n in G.nodes)
             {
                 var tuple = G.GetNeighboursFast(n);
@@ -86,30 +89,7 @@ namespace GPNC
                         }
                         else
                         {
-                            if (id == s) {
-                                foreach (int coreElement in core) {
-                                    if (OriginalG.IsEdge(coreElement, fn)) {
-                                        Edge e = new Edge(coreElement, fn);
-                                        cut.Add(e);
-                                    }
-                                }
-                            }
-
-                            else if (fn == t) {
-                                foreach (int coreElement in ring)
-                                {
-                                    if (OriginalG.IsEdge(coreElement, fn))
-                                    {
-                                        Edge e = new Edge(coreElement, fn);
-                                        cut.Add(e);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                Edge e = new Edge(id, fn);
-                                cut.Add(e);
-                            }
+                            AddCut(id, fn, OriginalG,G,s,t,core,ring);
                         }
                     }
                 }
@@ -119,6 +99,37 @@ namespace GPNC
 
             return result;
         }
-   
+
+        private void AddCut(int id,int fn,Graph OriginalG, Graph G, int s, int t, List<int> core, List<int> ring)
+        {
+            if (id == s)
+            {
+                foreach (int coreElement in core)
+                {
+                    if (OriginalG.IsEdge(coreElement, fn))
+                    {
+                        Edge e = new Edge(coreElement, fn);
+                        cut.Add(e);
+                    }
+                }
+            }
+
+            else if (fn == t)
+            {
+                foreach (int coreElement in ring)
+                {
+                    if (OriginalG.IsEdge(coreElement, fn))
+                    {
+                        Edge e = new Edge(coreElement, fn);
+                        cut.Add(e);
+                    }
+                }
+            }
+            else
+            {
+                Edge e = new Edge(id, fn);
+                cut.Add(e);
+            }
+        }
     }
 }

@@ -41,8 +41,8 @@ namespace GPNC
                     //remove cycles
                     if (tonode != fromnode)
                     {
-                        int v = G.AddNodeToGraph(fromnode);
-                        int w = G.AddNodeToGraph(tonode);
+                        int v = G.AddNodeToGraph(fromnode,1);
+                        int w = G.AddNodeToGraph(tonode,1);
                         G.AddEdge(v, w, 1);
                     }
 

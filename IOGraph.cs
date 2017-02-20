@@ -1,0 +1,110 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.IO;
+
+namespace GPNC
+{
+    class IOGraph
+    {
+
+        public static void WriteGraph(Graph G, string filename)
+        {
+            List<string> AllLinesNodes = new List<string>();
+
+            foreach (int id in G.nodes)
+            {
+                string[] line = new string[2];
+                line[0] = id.ToString();
+                line[1] = G.Size[id].ToString();
+                AllLinesNodes.Add(String.Join(",", line));
+            }
+            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "nodes.csv";
+            File.WriteAllLines(path, AllLinesNodes.ToArray());
+
+            List<string> AllLinesArcs = new List<string>();
+
+            foreach (var kvp in G.AllWeights)
+            {
+                int from = kvp.Key;
+                foreach (int to in kvp.Value.Keys)
+                {
+                    string[] line = new string[3];
+                    line[0] = from.ToString();
+
+                    line[1] = to.ToString();
+                    line[2] = G.AllWeights[from][to].ToString();
+                    AllLinesArcs.Add(String.Join(",", line));
+                }
+            }
+            path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "arcs.csv";
+            File.WriteAllLines(path, AllLinesArcs.ToArray());
+
+
+            List<string> AllParents = new List<string>();
+
+            foreach (var kvp in G.Parent)
+            {
+
+                string[] line = new string[2];
+                line[0] = kvp.Key.ToString();
+                line[1] = kvp.Value.ToString();
+                AllParents.Add(String.Join(",", line));
+
+            }
+            path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "parents.csv";
+            File.WriteAllLines(path, AllParents.ToArray());
+
+        }
+        public static Graph ReadGraph(string filename) {
+            var pathNodes = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "nodes.csv";
+            var pathArcs = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "arcs.csv";
+            var pathParents = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "parents.csv";
+            Graph G = new Graph();
+            Stream stream = File.Open(pathNodes, FileMode.Open);
+            using (StreamReader sr = new StreamReader(stream))
+            {
+                String line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] values = line.Split(new char[] { ',' });
+                    int fromnode = Int32.Parse(values[0]);
+                    int size = Int32.Parse(values[1]);
+                    int v = G.AddNodeToGraph(fromnode, size);
+                }
+            }
+            stream = File.Open(pathArcs, FileMode.Open);
+            using (StreamReader sr = new StreamReader(stream))
+            {
+                String line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] values = line.Split(new char[] { ',' });
+                    int from = Int32.Parse(values[0]);
+                    int to = Int32.Parse(values[1]);
+                    int weight = Int32.Parse(values[2]);
+                    G.AddEdge(from,to,weight);
+                }
+            }
+            stream = File.Open(pathParents, FileMode.Open);
+            using (StreamReader sr = new StreamReader(stream))
+            {
+                String line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] values = line.Split(new char[] { ',' });
+                    int id = Int32.Parse(values[0]);
+                    int parent= Int32.Parse(values[1]);
+                    G.Parent[id] = parent;
+                }
+            }
+
+
+            return G;
+
+        }
+
+    }
+}
