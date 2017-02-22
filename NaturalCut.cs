@@ -14,7 +14,7 @@ namespace GPNC
 {
     static class NaturalCut
     {
-        public static HashSet<Edge> MakeCuts(Graph G, int U)
+        public static HashSet<Edge> MakeCuts(Graph G, int U,double alpha, double f)
         {
             HashSet<int> allNodes = new HashSet<int>();
             foreach (int id in G.nodes)
@@ -23,27 +23,27 @@ namespace GPNC
             }
             
             HashSet<Edge> allCuts = new HashSet<Edge>();
+            Random rnd = new Random();
             while (allNodes.Count > 0)
             {
 
-                int rID = RandomID(allNodes);
-                BFS bfs = new BFS(G, U, 1, 10, rID);
+                int rID = RandomID(allNodes,rnd);
+                BFS bfs = new BFS(G, U, alpha, f, rID);
                 Graph G2 = G.CreateSubGraph(bfs.SubGraph);
-                MinCut minCut = new MinCut();
-                List<int> p = minCut.partition(G,G2, bfs.Core, bfs.Ring);
-                p.ForEach(x => allNodes.Remove(x));
+                Tuple<List<int>, List<Edge>> partitionAndCut = MinCut.partition(G,bfs);
 
-                int size = 0;
-                p.ForEach(x => size += G.Size[x]);
+                //removes all nodes that are inside the cut
+                partitionAndCut.Item1.ForEach(x => allNodes.Remove(x));
 
-                minCut.cut.ForEach(x => allCuts.Add(x));
+                //adds all cutEdges
+                partitionAndCut.Item2.ForEach(x => allCuts.Add(x));
             }
 
             return allCuts;
         }
        
-        private static int RandomID(HashSet<int> allNodes) {
-            Random rnd = new Random();
+        private static int RandomID(HashSet<int> allNodes,Random rnd) {
+
             return allNodes.ToList()[rnd.Next(allNodes.Count)];
         }
     }

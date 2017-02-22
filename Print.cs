@@ -181,6 +181,10 @@ namespace GPNC
                 NodePoint cntnp = nodes[currentId];
                 gr.FillRectangle(pen, np.x, np.y, 1, 1);
             }
+            RectangleF rectf = new RectangleF(900, 900, 1000, 1000);
+            int count = 0;
+            G.GetAllArcs().ForEach(x => count += G.getWeight(x.To, x.From));
+            gr.DrawString(count.ToString(), new Font("Tahoma", 8), Brushes.White, rectf);
             var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
             "RESULT" + "a.png";
             bmp.Save(path);
@@ -203,9 +207,12 @@ namespace GPNC
                 int w = e.From;
                 NodePoint np1 = nodes[v];
                 NodePoint np2 = nodes[w];
-                gr.DrawLine(new Pen(Color.Blue, 5), np1.x, np1.y, np2.x, np2.y);
+                gr.DrawEllipse(new Pen(Color.Blue, 5), np1.x, np1.y, 3, 3);
+                gr.DrawEllipse(new Pen(Color.Blue, 5), np2.x, np2.y, 3, 3);
 
             }
+            RectangleF rectf = new RectangleF(900, 900, 1000, 1000);
+            gr.DrawString(cuts.Count.ToString(), new Font("Tahoma", 8), Brushes.White, rectf);
             var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
                 filename + "a.png";
             bmp.Save(path);

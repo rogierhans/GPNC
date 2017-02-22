@@ -16,7 +16,8 @@ namespace GPNC
     {
         static void Main(string[] args)
         {
-
+            double alpha = 1;
+            double f = 20;
             ////read graph
             //Graph G = Parser.ParseCSVFile();
             //Console.WriteLine(G.nodes.Count);
@@ -30,11 +31,8 @@ namespace GPNC
             //IOGraph.WriteGraph(OG, "OG");
 
             ////calculate max size partition
-            //int U = G.nodes.Count / 2;
+            //int U = G.nodes.Count / 10;
             //Console.WriteLine(U);
-
-            ////read Nodepoint to make graphs
-            //Dictionary<int, NodePoint> nodes = Parser.ParseNodes(G);
 
             ////Contract One degree
             //Filter.RemoveOneDegree(G);
@@ -43,97 +41,42 @@ namespace GPNC
             ////Contract two degree
             //Filter.RemoveTwoDegree(G);
             //Console.WriteLine(G.nodes.Count);
+            //IOGraph.WriteGraph(G, "RG");
+
 
             ////Find natural cuts and contract them
-            //HashSet<Edge> cuts = NaturalCut.MakeCuts(G, U);
+            //HashSet<Edge> cuts = NaturalCut.MakeCuts(G, U, alpha, f);
             //List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
             //ps.ForEach(x => { int v = G.ContractList(x); });
             //IOGraph.WriteGraph(G, "FG");
 
-            Graph OG = IOGraph.ReadGraph("OG");
-            Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
-            int U = OG.nodes.Count / 2;
+
             Graph G = IOGraph.ReadGraph("FG");
+            int combinedWeight = 0;
+            G.nodes.ToList().ForEach(x => combinedWeight += G.Size[x]);
+            int U = combinedWeight / 10;
 
 
             Dictionary<int, int> Parents = new Dictionary<int, int>(G.Parent);
             Graph FG = G.CreateSubGraph(G.nodes.ToList());
             Console.WriteLine(G.nodes.Count);
 
+            //Console.WriteLine(DateTime.Now.ToString("h:mm:ss tt"));
+            Greedy.initPar(G, U);
+            G = LocalSearch.Search1(G, FG, U);
 
 
-            Graph BestGraph = G;
-            int BestWeight = int.MaxValue;
-            int runs = 100;
-            Dictionary<int, HashSet<int>> realPS;
-            Dictionary<int, int> BestGraphParents = null;
-            Random rnd = new Random();
-            while (runs > 0)
-            {
-                //apply greedy algorithm
-                Greedy.initPar(G, U);
-                //G.print();
-                Console.WriteLine(G.nodes.Count);
-
-
-                int weight = 0;
-                G.GetAllArcs().ForEach(x => weight += G.getWeight(x.To, x.From));
-                Console.WriteLine("Weight:{0}", weight);
-
-                if (calcAccept(weight, BestWeight, runs, rnd))
-                {
-                    BestGraph = G.CreateSubGraph(G.nodes.ToList());
-                    BestWeight = weight;
-                    BestGraphParents = new Dictionary<int, int>(G.Parent);
-                }
-
-                //Get the partitions
-                realPS = Uncontract.getPartitions(BestGraph, FG, BestGraphParents);
-
-                G = FG.CreateSubGraph(FG.nodes.ToList());
-
-                List<Edge> edges = BestGraph.GetAllArcs();
-                Edge e = edges[rnd.Next(edges.Count)];
-
-                foreach (var kvp in realPS)
-                {
-                    int key = kvp.Key;
-                    if (!(key == e.From || key == e.To))
-                    {
-                        G.ContractList(kvp.Value.ToList());
-                    }
-                }
-                runs--;
-            }
-            IOGraph.WriteGraph(BestGraph, "BG");
-
-            foreach (var kvp in BestGraphParents)
+            foreach (var kvp in G.Parent)
             {
                 Parents[kvp.Key] = kvp.Value;
             }
-
-            realPS = Uncontract.getPartitions(BestGraph, OG, Parents);
-            //Print.makePrints(BestGraph, OG, nodes, realPS, Parents);
+            //IOGraph.WriteGraph(BestGraph, "BG");
+            Graph OG = IOGraph.ReadGraph("OG");
+            Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
+            var realPS = Uncontract.getPartitions(G, OG, Parents);
+            Print.makePrints(G, OG, nodes, realPS, Parents);
 
             Console.ReadLine();
-        }
-
-        private static bool calcAccept(int weight, int bestWeight, int runs, Random r)
-        {
-
-            if (weight < bestWeight)
-                return true;
-            else
-            {
-                //double c = runs / 10.0;
-                //double score = bestWeight - weight;
-                //double p = Math.Pow(Math.E, score/c);
-                //Console.WriteLine(p);
-                //bool boo= (p > r.NextDouble());
-                //Console.WriteLine(boo);
-                //return boo;
-                return false;
-            }
         }
     }
 

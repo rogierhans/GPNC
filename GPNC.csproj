@@ -54,6 +54,7 @@
     <Compile Include="Graph.cs" />
     <Compile Include="Greedy.cs" />
     <Compile Include="IOGraph.cs" />
+    <Compile Include="LocalSearch.cs" />
     <Compile Include="MinCut.cs" />
     <Compile Include="NaturalCut.cs" />
     <Compile Include="Parser.cs" />

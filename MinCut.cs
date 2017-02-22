@@ -12,24 +12,27 @@ using Google.OrTools.Graph;
 
 namespace GPNC
 {
-    class MinCut
+    static class MinCut
     {
-        public List<Edge> cut = new List<Edge>();
-        public List<int> partition(Graph OriginalG, Graph G, List<int> core, List<int> ring)
+
+        static public Tuple<List<int>, List<Edge>> partition(Graph OriginalG, BFS bfs)
         {
-            G.ContractList(core);
-            G.ContractList(ring);
-            List<int> result = SolveOnGraph(OriginalG, G, core.First(), ring.First(),core,ring);
-            //return core;
-            return core.Union(result).ToList();
+            Graph G = OriginalG.CreateSubGraph(bfs.SubGraph);
+            G.ContractList(bfs.Core);
+            G.ContractList(bfs.Ring);
+            Tuple<List<int>, List<Edge>> result = SolveOnGraph(OriginalG, G, bfs);
+            return new Tuple<List<int>, List<Edge>>(bfs.Core.Union(result.Item1).ToList(), result.Item2);
         }
 
-        private List<int> SolveOnGraph(Graph OriginalG, Graph G, int s, int t, List<int> core, List<int> ring)
+        static private Tuple<List<int>, List<Edge>> SolveOnGraph(Graph OriginalG, Graph G,BFS bfs)
         {
+            List<Edge> cut = new List<Edge>();
             Dictionary<int, Dictionary<int, int>> arcToIndex = new Dictionary<int, Dictionary<int, int>>();
             int index = 0;
             MaxFlow maxFlow = new MaxFlow();
 
+            int s = bfs.Core.First();
+            int t = bfs.Ring.First();
             //add arcs to Google OrTools
             foreach (int n in G.nodes)
             {
@@ -89,7 +92,7 @@ namespace GPNC
                         }
                         else
                         {
-                            AddCut(id, fn, OriginalG,G,s,t,core,ring);
+                            AddCut(id, fn, OriginalG, G,bfs,cut);
                         }
                     }
                 }
@@ -97,14 +100,17 @@ namespace GPNC
 
             }
 
-            return result;
+            return new Tuple<List<int>, List<Edge>> (result,cut);
         }
 
-        private void AddCut(int id,int fn,Graph OriginalG, Graph G, int s, int t, List<int> core, List<int> ring)
+        static private List<Edge> AddCut(int id, int fn, Graph OriginalG, Graph G, BFS bfs , List<Edge> cut)
         {
+            int s = bfs.Core.First();
+            int t = bfs.Ring.First();
+
             if (id == s)
             {
-                foreach (int coreElement in core)
+                foreach (int coreElement in bfs.Core)
                 {
                     if (OriginalG.IsEdge(coreElement, fn))
                     {
@@ -116,11 +122,11 @@ namespace GPNC
 
             else if (fn == t)
             {
-                foreach (int coreElement in ring)
+                foreach (int ringElement in bfs.Ring)
                 {
-                    if (OriginalG.IsEdge(coreElement, fn))
+                    if (OriginalG.IsEdge(ringElement, fn))
                     {
-                        Edge e = new Edge(coreElement, fn);
+                        Edge e = new Edge(ringElement, fn);
                         cut.Add(e);
                     }
                 }
@@ -130,6 +136,7 @@ namespace GPNC
                 Edge e = new Edge(id, fn);
                 cut.Add(e);
             }
+            return cut;
         }
     }
 }

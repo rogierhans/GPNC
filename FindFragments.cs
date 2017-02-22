@@ -8,6 +8,12 @@ namespace GPNC
 {
     static class FindFragments
     {
+        public static Graph FastContraction(Graph G, HashSet<Edge> cuts, int U) {
+            G.GetAllArcs().ForEach(x => { if (!cuts.Contains(x)) G.ContractionAlt(x.From,x.To); });
+            return G;
+        }
+
+
         public static List<List<int>> FindPartions(Graph G, HashSet<Edge> cuts, int U)
         {
             List<List<int>> ps = new List<List<int>>();

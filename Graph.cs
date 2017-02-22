@@ -125,6 +125,15 @@ namespace GPNC
             return AllWeights[v].ContainsKey(w);
         }
 
+        public int ContractionAlt(int v1, int w1) {
+            int v2 = v1;
+            while (!nodes.Contains(v2)) v2 = Parent[v2];
+            int w2 = w1;
+            while (!nodes.Contains(w2)) w2 = Parent[w2];
+            return Contraction(v2, w2);
+        }
+
+
         public List<Edge> GetAllArcs()
         {
             List<Edge> arcs = new List<Edge>();
