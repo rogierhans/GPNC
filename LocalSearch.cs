@@ -15,7 +15,6 @@ namespace GPNC
             int BestWeight = int.MaxValue;
             int runs = 10000;
             Dictionary<int, HashSet<int>> realPS;
-            Dictionary<int, int> BestGraphParents = null;
             Random rnd = new Random();
             int i = 0;
             int meta = 0;
@@ -34,14 +33,13 @@ namespace GPNC
                 {
                     BestGraph = G.CreateSubGraph(G.nodes.ToList());
                     BestWeight = weight;
-                    BestGraphParents = new Dictionary<int, int>(G.Parent);
                     i = 0;
                 }
 
                 //Get the partitions
-                realPS = Uncontract.getPartitions(BestGraph, FG, BestGraphParents);
+                realPS = Uncontract.GetPartitions(BestGraph, FG);
 
-                G = FG.CreateSubGraph(FG.nodes.ToList());
+                G = FG.CreateSubGraphWithoutParent(FG.nodes.ToList());
 
                 List<Edge> edges = BestGraph.GetAllArcs();
                 if (i >= edges.Count)
@@ -49,37 +47,25 @@ namespace GPNC
                     if (meta > 5)
                         break;
                     else
-                    { meta++;
+                    {
+                        meta++;
                         i = 0;
                     }
                 }
                 //Edge e = edges[rnd.Next(edges.Count)];
-                Edge e = edges.OrderBy(x => BestGraph.getWeight(x.To, x.From)).ToList()[(edges.Count -1)-i];
-                Contracted1(G, realPS, e);
+                Edge e = edges.OrderBy(x => BestGraph.getWeight(x.To, x.From)).ToList()[(edges.Count - 1) - i];
+                Contracted(G, realPS, e);
 
                 //apply greedy algorithm
-                Greedy.initPar(G, U);
+                G.ApplyGreedyAlgorithm(U);
                 runs--; i++;
             }
-            BestGraph.Parent = BestGraphParents;
+            foreach (var kvp in FG.Parent) {
+                BestGraph.Parent[kvp.Key] = kvp.Value;
+            }
             return BestGraph;
         }
-        private static void Contracted1(Graph G, Dictionary<int, HashSet<int>> realPS, Edge e)
-        {
-            HashSet<int> tabo = new HashSet<int>();
-            //foreach (int n in G.GetNeighbours(e.To)) { tabo.Add(n); }
-            //foreach (int n in G.GetNeighbours(e.From)) { tabo.Add(n); }
-            tabo.Add(e.To); tabo.Add(e.From);
-            foreach (var kvp in realPS)
-            {
-                int key = kvp.Key;
-                if (!tabo.Contains(key))
-                {
-                    G.ContractList(kvp.Value.ToList());
-                }
-            }
-        }
-        private static void Contracted2(Graph G, Dictionary<int, HashSet<int>> realPS, Edge e)
+        private static void Contracted(Graph G, Dictionary<int, HashSet<int>> realPS, Edge e)
         {
             foreach (var kvp in realPS)
             {

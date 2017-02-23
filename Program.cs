@@ -18,7 +18,9 @@ namespace GPNC
         {
             double alpha = 1;
             double f = 20;
-            ////read graph
+            int U = 100000;
+
+            //read graph
             //Graph G = Parser.ParseCSVFile();
             //Console.WriteLine(G.nodes.Count);
 
@@ -42,27 +44,20 @@ namespace GPNC
             //Filter.RemoveTwoDegree(G);
             //Console.WriteLine(G.nodes.Count);
             //IOGraph.WriteGraph(G, "RG");
-
+            //Graph G = IOGraph.ReadGraph("RG");
 
             ////Find natural cuts and contract them
             //HashSet<Edge> cuts = NaturalCut.MakeCuts(G, U, alpha, f);
             //List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
             //ps.ForEach(x => { int v = G.ContractList(x); });
             //IOGraph.WriteGraph(G, "FG");
-
-
             Graph G = IOGraph.ReadGraph("FG");
-            int combinedWeight = 0;
-            G.nodes.ToList().ForEach(x => combinedWeight += G.Size[x]);
-            int U = combinedWeight / 10;
 
 
             Dictionary<int, int> Parents = new Dictionary<int, int>(G.Parent);
             Graph FG = G.CreateSubGraph(G.nodes.ToList());
             Console.WriteLine(G.nodes.Count);
-
-            //Console.WriteLine(DateTime.Now.ToString("h:mm:ss tt"));
-            Greedy.initPar(G, U);
+            G.ApplyGreedyAlgorithm(U);
             G = LocalSearch.Search1(G, FG, U);
 
 
@@ -73,12 +68,18 @@ namespace GPNC
             //IOGraph.WriteGraph(BestGraph, "BG");
             Graph OG = IOGraph.ReadGraph("OG");
             Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
-            var realPS = Uncontract.getPartitions(G, OG, Parents);
-            Print.makePrints(G, OG, nodes, realPS, Parents);
+            Print.makePrints(G, OG, nodes, Parents);
 
             Console.ReadLine();
         }
     }
+
+    //Graph test = G.CreateSubGraph(G.nodes.ToList());
+    //var now = DateTime.Now.Second;
+    //test = FindFragments.FastContraction(test,cuts,U);
+    //        Console.WriteLine(DateTime.Now.Second -  now);
+    //        Console.ReadLine();
+    //        now = DateTime.Now.Second;
 
     public struct NodePoint
     {

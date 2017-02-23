@@ -8,8 +8,18 @@ namespace GPNC
 {
     static class FindFragments
     {
-        public static Graph FastContraction(Graph G, HashSet<Edge> cuts, int U) {
-            G.GetAllArcs().ForEach(x => { if (!cuts.Contains(x)) G.ContractionAlt(x.From,x.To); });
+        public static Graph FastContraction(Graph G, HashSet<Edge> cuts, int U)
+        {
+            G.GetAllArcs().ForEach(x =>
+
+            {
+                if (!cuts.Contains(x))
+                {
+                    G.ContractionAlt(x.From, x.To);
+
+                }
+
+            });
             return G;
         }
 
@@ -22,7 +32,7 @@ namespace GPNC
             Random rnd = new Random();
             while (allNodes.Count > 0)
             {
-                int rID = RandomID(allNodes,rnd);
+                int rID = RandomID(allNodes, rnd);
                 List<int> p = partitioning(G, cuts, rID, U);
                 p.ForEach(x => allNodes.Remove(x));
                 ps.Add(p);
@@ -59,7 +69,7 @@ namespace GPNC
 
             return p;
         }
-        private static int RandomID(HashSet<int> allNodes,Random rnd)
+        private static int RandomID(HashSet<int> allNodes, Random rnd)
         {
 
             int index = rnd.Next(allNodes.Count);

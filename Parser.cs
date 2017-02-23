@@ -97,8 +97,8 @@ namespace GPNC
                 hx = n.longi - minLongi;
                 hy = n.lati - minLati;
                 NodePoint p = new NodePoint();
-                p.x = (int)(((float)hx / mx) * 1000);
-                p.y = (int)(1000 - (((float)hy / my) * 1000));
+                p.x = (int)(((float)hx / mx) * 4000);
+                p.y = (int)(4000 - (((float)hy / my) * 4000));
                 p.lati = n.lati;
                 p.longi = n.longi;
                 dict[n.id] = p;

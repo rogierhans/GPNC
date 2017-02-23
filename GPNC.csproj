@@ -49,13 +49,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BFS.cs" />
+    <Compile Include="EdgeStructure.cs" />
     <Compile Include="Filter.cs" />
     <Compile Include="FindFragments.cs" />
     <Compile Include="Graph.cs" />
-    <Compile Include="Greedy.cs" />
     <Compile Include="IOGraph.cs" />
     <Compile Include="LocalSearch.cs" />
-    <Compile Include="MinCut.cs" />
     <Compile Include="NaturalCut.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Print.cs" />

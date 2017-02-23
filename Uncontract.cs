@@ -8,14 +8,14 @@ namespace GPNC
 {
     static class Uncontract
     {
-        public static Dictionary<int, HashSet<int>>  getPartitions( Graph G, Graph OG, Dictionary<int,int> Parents) {
+        public static Dictionary<int, HashSet<int>>  GetPartitions( Graph G, Graph OG) {
             Dictionary<int, HashSet<int>> realPS = new Dictionary<int, HashSet<int>>();
             foreach (int id in OG.nodes)
             {
                 int currentNode = id;
                 while (!G.nodes.Contains(currentNode))
                 {
-                    currentNode = Parents[currentNode];
+                    currentNode = G.Parent[currentNode];
                 }
                 if (!realPS.ContainsKey(currentNode))
                 {
