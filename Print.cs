@@ -39,7 +39,7 @@ namespace GPNC
                 HashSet<int> par2 = realPS[e.From];
                 PrintCutOfTwoFragments(OG, nodes, par1, par2, realEdges, "1"+ e.To + "" + e.From);
             }
-            PrintCutsOnGraph(nodes,OG, G.GetAllArcs(), realEdges, "0GraphWithCuts");
+            PrintCutsOnGraph(nodes,OG,G, OG.GetAllArcs(), realEdges,Parents, "0GraphWithCuts");
 
         }
 
@@ -191,16 +191,23 @@ namespace GPNC
             "0RESULT" + ".png";
             bmp.Save(path);
         }
-        public static void PrintCutsOnGraph(Dictionary<int, NodePoint> nodes, Graph OG, List<Edge> allCuts, List<Edge> cuts, String filename)
+        public static void PrintCutsOnGraph(Dictionary<int, NodePoint> nodes, Graph OG,Graph G, List<Edge> allCuts, List<Edge> cuts,Dictionary<int,int> Parent, String filename)
         {
-            int size = 4000;
+            int size = 20000;
             var bmp = new Bitmap(size, size);
             var gr = Graphics.FromImage(bmp);
             int maxLati = OG.nodes.Max(x => nodes[x].lati);
             int minLati = OG.nodes.Min(x => nodes[x].lati);
             int maxLongi = OG.nodes.Max(x => nodes[x].longi);
             int minLongi = OG.nodes.Min(x => nodes[x].longi);
+            Random r = new Random();
+            Dictionary<int, Pen> pens = new Dictionary<int, Pen>();
+            foreach (int id in G.nodes)
+            {
 
+                Pen pen = new Pen(randomColor(r));
+                pens[id] = pen;
+            }
             //foreach (NodePoint np in nodes.Values)
             //{
             //    gr.FillRectangle(Brushes.Red, calcX(np, minLongi, maxLongi, size), calcY(np, minLati, maxLati, size), 1, 1);
@@ -209,9 +216,15 @@ namespace GPNC
             {
                 int v = e.To;
                 int w = e.From;
+                int currentId = e.To;
+                while (!pens.ContainsKey(currentId))
+                {
+                    currentId = Parent[currentId];
+                }
+                Pen pen = pens[currentId];
                 NodePoint np1 = nodes[v];
                 NodePoint np2 = nodes[w];
-                gr.DrawLine(new Pen(Color.Red), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
+                gr.DrawLine(pen, calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
             }
             foreach (Edge e in cuts)
             {
@@ -219,8 +232,8 @@ namespace GPNC
                 int w = e.From;
                 NodePoint np1 = nodes[v];
                 NodePoint np2 = nodes[w];
-                gr.DrawEllipse(new Pen(Color.Blue, 5), np1.x, np1.y, 3, 3);
-                gr.DrawEllipse(new Pen(Color.Blue, 5), np2.x, np2.y, 3, 3);
+                gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
+                gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
                 gr.DrawLine(new Pen(Color.Blue,3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
             }
             RectangleF rectf = new RectangleF(size-100, size - 100, size, size);
