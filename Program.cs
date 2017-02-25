@@ -50,9 +50,10 @@ namespace GPNC
             Graph OG = IOGraph.ReadGraph("OG");
             Graph RG = IOGraph.ReadGraph("RG");
             Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
-            Tree T = new Tree(OG, RG, U, 10000, alpha, f,new HashSet<int>(),nodes,0.ToString());
+            Tree T = new Tree(OG, RG, U, 5000, alpha, f,new HashSet<int>(),nodes,0.ToString());
 
             Console.WriteLine(T.Quality());
+            Console.ReadLine();
             T.Print(0);
             //Graph G = IOGraph.ReadGraph("FG");
 

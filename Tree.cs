@@ -51,7 +51,7 @@ namespace GPNC
 
 
                     //todo
-                    HashSet<int> originalIDs = GetOrignalID(OG, G);
+                    HashSet<int> originalIDs = GetOrignalID(OG, G,kvp.Value);
                     HashSet<int> parBoundaryNodes = new HashSet<int>();
                     foreach (Edge e in OG.GetAllArcs())
                     {
@@ -77,14 +77,14 @@ namespace GPNC
         }
 
         //inefficient
-        private HashSet<int> GetOrignalID(Graph OG, Graph G)
+        private HashSet<int> GetOrignalID(Graph OG, Graph G, HashSet<int> par)
         {
             HashSet<int> set = new HashSet<int>();
             foreach (int id in OG.nodes)
             {
                 int currentNode = id;
                 while (G.Parent.ContainsKey(currentNode)) currentNode = G.Parent[currentNode];
-                if (G.nodes.Contains(currentNode)) set.Add(id);
+                if (par.Contains(currentNode)) set.Add(id);
             }
             return set;
         }
@@ -135,7 +135,7 @@ namespace GPNC
                 s += "\t";
             }
             Console.Write(s);
-            Console.WriteLine(Nodes);
+            Console.WriteLine(Nodes+ " " + BoundaryNodes.Count + " " + CutEdges.Count);
             Childeren.ForEach(x => x.Print(n + 1));
         }
 
