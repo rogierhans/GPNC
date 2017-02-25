@@ -60,6 +60,7 @@
     <Compile Include="Print.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tree.cs" />
     <Compile Include="Uncontract.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -12,10 +12,21 @@ namespace GPNC
 {
     static class Print
     {
-        public static void makePrints(Graph G, Graph OG, Dictionary<int,NodePoint> nodes,Dictionary<int,int> Parents) {
+        public static void makePrints(Graph G, Graph OG, Dictionary<int,NodePoint> nodes,string filename) {
             var realPS = Uncontract.GetPartitions(G, OG);
-            print(G, nodes,Parents);
+            //print(G, nodes, filename);
+
+
             List<Edge> realEdges = new List<Edge>();
+
+
+
+
+
+
+
+
+
             foreach (Edge e in G.GetAllArcs())
             {
                 HashSet<int> par1 = realPS[e.To];
@@ -33,13 +44,13 @@ namespace GPNC
 
             }
 
-            foreach (Edge e in G.GetAllArcs())
-            {
-                HashSet<int> par1 = realPS[e.To];
-                HashSet<int> par2 = realPS[e.From];
-                PrintCutOfTwoFragments(OG, nodes, par1, par2, realEdges, "1"+ e.To + "" + e.From);
-            }
-            PrintCutsOnGraph(nodes,OG,G, OG.GetAllArcs(), realEdges,Parents, "0GraphWithCuts");
+            //foreach (Edge e in G.GetAllArcs())
+            //{
+            //    HashSet<int> par1 = realPS[e.To];
+            //    HashSet<int> par2 = realPS[e.From];
+            //    PrintCutOfTwoFragments(OG, nodes, par1, par2, realEdges, "1"+ e.To + "" + e.From);
+            //}
+            PrintCutsOnGraph(nodes,OG,G, realEdges, filename);
 
         }
 
@@ -157,7 +168,7 @@ namespace GPNC
 
         }
 
-        public static void print(Graph G, Dictionary<int, NodePoint> nodes, Dictionary<int,int> Parent)
+        public static void print(Graph G, Dictionary<int, NodePoint> nodes,string filename)
         {
             int size = 4000;
             var bmp = new Bitmap(size, size);
@@ -176,7 +187,7 @@ namespace GPNC
                 int currentId = kvp.Key;
                 while (!pens.ContainsKey(currentId))
                 {
-                    currentId = Parent[currentId];
+                    currentId = G.Parent[currentId];
 
                 }
                 Brush pen = pens[currentId];
@@ -188,10 +199,10 @@ namespace GPNC
             G.GetAllArcs().ForEach(x => count += G.getWeight(x.To, x.From));
             gr.DrawString(count.ToString(), new Font("Tahoma", 8), Brushes.White, rectf);
             var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
-            "0RESULT" + ".png";
+            filename + "a.png";
             bmp.Save(path);
         }
-        public static void PrintCutsOnGraph(Dictionary<int, NodePoint> nodes, Graph OG,Graph G, List<Edge> allCuts, List<Edge> cuts,Dictionary<int,int> Parent, String filename)
+        public static void PrintCutsOnGraph(Dictionary<int, NodePoint> nodes, Graph OG,Graph G, List<Edge> cuts, String filename)
         {
             int size = 20000;
             var bmp = new Bitmap(size, size);
@@ -212,14 +223,14 @@ namespace GPNC
             //{
             //    gr.FillRectangle(Brushes.Red, calcX(np, minLongi, maxLongi, size), calcY(np, minLati, maxLati, size), 1, 1);
             //}
-            foreach (Edge e in allCuts)
+            foreach (Edge e in OG.GetAllArcs())
             {
                 int v = e.To;
                 int w = e.From;
                 int currentId = e.To;
                 while (!pens.ContainsKey(currentId))
                 {
-                    currentId = Parent[currentId];
+                    currentId = G.Parent[currentId];
                 }
                 Pen pen = pens[currentId];
                 NodePoint np1 = nodes[v];
@@ -239,7 +250,7 @@ namespace GPNC
             RectangleF rectf = new RectangleF(size-100, size - 100, size, size);
             gr.DrawString(cuts.Count.ToString(), new Font("Tahoma", 8), Brushes.White, rectf);
             var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
-                filename + ".png";
+                filename + "b.png";
             bmp.Save(path);
 
         }

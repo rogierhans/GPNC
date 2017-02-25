@@ -13,18 +13,16 @@ namespace GPNC
 
             Graph BestGraph = G;
             int BestWeight = int.MaxValue;
-            int runs = 10000;
-            Dictionary<int, HashSet<int>> realPS;
+            int runs = 1000;
+            Dictionary<int, HashSet<int>> partitions;
             Random rnd = new Random();
-            int i = 0;
-            int meta = 0;
+            int index = 0;
+            int round = 5;
             while (runs > 0)
             {
 
                 //G.print();
                 Console.WriteLine(G.nodes.Count);
-
-
                 int weight = 0;
                 G.GetAllArcs().ForEach(x => weight += G.getWeight(x.To, x.From));
                 Console.WriteLine("Weight:{0}", weight);
@@ -33,41 +31,41 @@ namespace GPNC
                 {
                     BestGraph = G.CreateSubGraph(G.nodes.ToList());
                     BestWeight = weight;
-                    i = 0;
+                    index = 0;
                 }
 
                 //Get the partitions
-                realPS = Uncontract.GetPartitions(BestGraph, FG);
+                partitions = Uncontract.GetPartitions(BestGraph, FG);
 
                 G = FG.CreateSubGraphWithoutParent(FG.nodes.ToList());
 
                 List<Edge> edges = BestGraph.GetAllArcs();
-                if (i >= edges.Count)
+                if (index >= edges.Count)
                 {
-                    if (meta > 5)
+                    if (round <= 0)
                         break;
                     else
                     {
-                        meta++;
-                        i = 0;
+                        round--;
+                        index = 0;
                     }
                 }
                 //Edge e = edges[rnd.Next(edges.Count)];
-                Edge e = edges.OrderBy(x => BestGraph.getWeight(x.To, x.From)).ToList()[(edges.Count - 1) - i];
-                Contracted(G, realPS, e);
+                Edge e = edges.OrderBy(x => BestGraph.getWeight(x.To, x.From)).ToList()[(edges.Count - 1) - index];
+                ContractOnGraph(G, partitions, e);
 
                 //apply greedy algorithm
                 G.ApplyGreedyAlgorithm(U);
-                runs--; i++;
+                runs--; index++;
             }
             foreach (var kvp in FG.Parent) {
                 BestGraph.Parent[kvp.Key] = kvp.Value;
             }
             return BestGraph;
         }
-        private static void Contracted(Graph G, Dictionary<int, HashSet<int>> realPS, Edge e)
+        private static void ContractOnGraph(Graph G, Dictionary<int, HashSet<int>> partitions, Edge e)
         {
-            foreach (var kvp in realPS)
+            foreach (var kvp in partitions)
             {
                 int key = kvp.Key;
                 if (!(key == e.From || key == e.To))

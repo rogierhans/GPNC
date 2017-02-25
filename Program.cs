@@ -20,7 +20,7 @@ namespace GPNC
             double f = 20;
             int U = 100000;
 
-            //read graph
+            ////read graph
             //Graph G = Parser.ParseCSVFile();
             //Console.WriteLine(G.nodes.Count);
 
@@ -32,10 +32,6 @@ namespace GPNC
             //Console.WriteLine(G.nodes.Count);
             //IOGraph.WriteGraph(OG, "OG");
 
-            ////calculate max size partition
-            //int U = G.nodes.Count / 10;
-            //Console.WriteLine(U);
-
             ////Contract One degree
             //Filter.RemoveOneDegree(G);
             //Console.WriteLine(G.nodes.Count);
@@ -44,31 +40,31 @@ namespace GPNC
             //Filter.RemoveTwoDegree(G);
             //Console.WriteLine(G.nodes.Count);
             //IOGraph.WriteGraph(G, "RG");
-            //Graph G = IOGraph.ReadGraph("RG");
+            ////Graph G = IOGraph.ReadGraph("RG");
 
             ////Find natural cuts and contract them
             //HashSet<Edge> cuts = NaturalCut.MakeCuts(G, U, alpha, f);
             //List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
             //ps.ForEach(x => { int v = G.ContractList(x); });
             //IOGraph.WriteGraph(G, "FG");
-            Graph G = IOGraph.ReadGraph("FG");
-
-
-            Dictionary<int, int> Parents = new Dictionary<int, int>(G.Parent);
-            Graph FG = G.CreateSubGraph(G.nodes.ToList());
-            Console.WriteLine(G.nodes.Count);
-            G.ApplyGreedyAlgorithm(U);
-            G = LocalSearch.Search1(G, FG, U);
-
-
-            foreach (var kvp in G.Parent)
-            {
-                Parents[kvp.Key] = kvp.Value;
-            }
-            //IOGraph.WriteGraph(BestGraph, "BG");
             Graph OG = IOGraph.ReadGraph("OG");
+            Graph RG = IOGraph.ReadGraph("RG");
             Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
-            Print.makePrints(G, OG, nodes, Parents);
+            Tree T = new Tree(OG, RG, U, 10000, alpha, f,new HashSet<int>(),nodes,0.ToString());
+
+            Console.WriteLine(T.Quality());
+            T.Print(0);
+            //Graph G = IOGraph.ReadGraph("FG");
+
+
+            //Graph FG = G.CreateSubGraph(G.nodes.ToList());
+            //Console.WriteLine(G.nodes.Count);
+            //G.ApplyGreedyAlgorithm(U);
+            //G = LocalSearch.Search1(G, FG, U);
+            //Dictionary<int ,HashSet<int>> partitions = Uncontract.GetPartitions(G, OG);
+
+
+            //Print.makePrints(G, OG, nodes);
 
             Console.ReadLine();
         }

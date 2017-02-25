@@ -33,9 +33,11 @@ namespace GPNC
 
                 //removes all nodes that are inside the cut
                 partitionAndCut.Item1.ForEach(x => allNodes.Remove(x));
+                //bfs.Core.ForEach(x =>allNodes.Remove(x));
 
                 //adds all cutEdges
                 partitionAndCut.Item2.ForEach(x => allCuts.Add(x));
+
             }
 
             return allCuts;

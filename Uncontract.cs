@@ -9,7 +9,7 @@ namespace GPNC
     static class Uncontract
     {
         public static Dictionary<int, HashSet<int>>  GetPartitions( Graph G, Graph OG) {
-            Dictionary<int, HashSet<int>> realPS = new Dictionary<int, HashSet<int>>();
+            Dictionary<int, HashSet<int>> partitions = new Dictionary<int, HashSet<int>>();
             foreach (int id in OG.nodes)
             {
                 int currentNode = id;
@@ -17,18 +17,18 @@ namespace GPNC
                 {
                     currentNode = G.Parent[currentNode];
                 }
-                if (!realPS.ContainsKey(currentNode))
+                if (!partitions.ContainsKey(currentNode))
                 {
                     HashSet<int> par = new HashSet<int>();
-                    realPS[currentNode] = par;
+                    partitions[currentNode] = par;
                 }
-                realPS[currentNode].Add(id);
+                partitions[currentNode].Add(id);
             }
-            foreach (var kvp in realPS)
+            foreach (var kvp in partitions)
             {
                 Console.WriteLine(kvp.Key + " " + kvp.Value.Count);
             }
-            return realPS;
+            return partitions;
         }
     }
 }
