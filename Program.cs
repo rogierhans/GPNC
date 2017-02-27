@@ -17,7 +17,7 @@ namespace GPNC
         static void Main(string[] args)
         {
             double alpha = 1;
-            double f = 20;
+
             int U = 100000;
 
             ////read graph
@@ -48,13 +48,41 @@ namespace GPNC
             //ps.ForEach(x => { int v = G.ContractList(x); });
             //IOGraph.WriteGraph(G, "FG");
             Graph OG = IOGraph.ReadGraph("OG");
-            Graph RG = IOGraph.ReadGraph("RG");
             Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
-            Tree T = new Tree(OG, RG, U, 5000, alpha, f,new HashSet<int>(),nodes,0.ToString());
 
-            Console.WriteLine(T.Quality());
-            Console.ReadLine();
-            T.Print(0);
+
+            for (double f = 15; f < 30; f = f + 5)
+            {
+
+                int allCuts = 0;
+                for (int i = 0; i < 3; i++)
+                {
+                    Graph G = IOGraph.ReadGraph("RG");
+                    HashSet<Edge> cuts = NaturalCut.MakeCuts(nodes, G, U, alpha, f);
+                    List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
+                    ps.ForEach(x => G.ContractList(x));
+                    Graph FG = G.CreateSubGraph(G.nodes.ToList());
+                    Console.WriteLine(G.nodes.Count);
+                    G.ApplyGreedyAlgorithm(U);
+                    G = LocalSearch.Search1(G, FG, U);
+                    int cut = 0;
+                    foreach (Edge e in G.GetAllArcs())
+                    {
+                        cut += G.getWeight(e.To, e.From);
+                    }
+                    allCuts += cut;
+                    Print.makePrints(G, OG, nodes, "Coref" + f + "ac" + (double)allCuts / (i + 1) + "");
+
+                }
+            }
+
+
+
+            //Tree T = new Tree(OG, RG, U, 5000, alpha, f,new HashSet<int>(),nodes,0.ToString());
+
+            //Console.WriteLine(T.Quality());
+            //Console.ReadLine();
+            //T.Print(0);
             //Graph G = IOGraph.ReadGraph("FG");
 
 

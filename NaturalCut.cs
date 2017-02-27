@@ -14,36 +14,44 @@ namespace GPNC
 {
     static class NaturalCut
     {
-        public static HashSet<Edge> MakeCuts(Graph G, int U,double alpha, double f)
+        public static HashSet<Edge> MakeCuts(Dictionary<int, NodePoint> nodes, Graph G, int U, double alpha, double f)
         {
             HashSet<int> allNodes = new HashSet<int>();
             foreach (int id in G.nodes)
             {
                 allNodes.Add(id);
             }
-            
+
             HashSet<Edge> allCuts = new HashSet<Edge>();
             Random rnd = new Random();
             while (allNodes.Count > 0)
             {
 
-                int rID = RandomID(allNodes,rnd);
+                int rID = RandomID(allNodes, rnd);
                 BFS bfs = new BFS(G, U, alpha, f, rID);
-                Tuple<List<int>, List<Edge>> partitionAndCut = GetPartitionAndCut(G,bfs);
+                Tuple<List<int>, List<Edge>> partitionAndCut = GetPartitionAndCut(G, bfs);
 
                 //removes all nodes that are inside the cut
-                partitionAndCut.Item1.ForEach(x => allNodes.Remove(x));
-                //bfs.Core.ForEach(x =>allNodes.Remove(x));
+                //partitionAndCut.Item1.ForEach(x => allNodes.Remove(x));
+                bfs.Core.ForEach(x => allNodes.Remove(x));
 
                 //adds all cutEdges
                 partitionAndCut.Item2.ForEach(x => allCuts.Add(x));
+
+
+                //remove latr
+                //HashSet<int> parpar = new HashSet<int>();
+                //partitionAndCut.Item1.ForEach(e => parpar.Add(e));
+                //Print.PrintCutFound(nodes, G.CreateSubGraphWithoutParent(bfs.SubGraph), bfs.SubGraph, partitionAndCut.Item1, parpar, bfs.Core, allNodes.Count.ToString());
+                Console.WriteLine(allNodes.Count + "left");
 
             }
 
             return allCuts;
         }
-       
-        private static int RandomID(HashSet<int> allNodes,Random rnd) {
+
+        private static int RandomID(HashSet<int> allNodes, Random rnd)
+        {
 
             return allNodes.ToList()[rnd.Next(allNodes.Count)];
         }
@@ -99,6 +107,8 @@ namespace GPNC
             queue.Enqueue(s);
             visited.Add(s);
             result.Add(s);
+
+            HashSet<int> hashCore = new HashSet<int>(bfs.Core);
             while (queue.Count > 0)
             {
                 int id = queue.Dequeue();
@@ -125,7 +135,7 @@ namespace GPNC
                         }
                         else
                         {
-                            AddCut(id, fn, OriginalG, SubGraph, bfs, cut);
+                            AddCut(id, fn, OriginalG, SubGraph, bfs, hashCore, cut);
                         }
                     }
                 }
@@ -136,18 +146,26 @@ namespace GPNC
             return new Tuple<List<int>, List<Edge>>(result, cut);
         }
 
-        static private List<Edge> AddCut(int id, int fn, Graph OriginalG, Graph G, BFS bfs, List<Edge> cut)
+        static private List<Edge> AddCut(int id, int fn, Graph OriginalG, Graph G, BFS bfs, HashSet<int> hashCore, List<Edge> cut)
         {
             int s = bfs.Core.First();
             int t = bfs.Ring.First();
 
             if (id == s)
             {
-                foreach (int coreElement in bfs.Core)
+                //foreach (int coreElement in bfs.Core)
+                //{
+                //    if (OriginalG.IsEdge(coreElement, fn))
+                //    {
+                //        Edge e = new Edge(coreElement, fn);
+                //        cut.Add(e);
+                //    }
+                //}
+                foreach (int potentialNeighbour in OriginalG.GetNeighbours(fn))
                 {
-                    if (OriginalG.IsEdge(coreElement, fn))
+                    if (hashCore.Contains(potentialNeighbour))
                     {
-                        Edge e = new Edge(coreElement, fn);
+                        Edge e = new Edge(potentialNeighbour, fn);
                         cut.Add(e);
                     }
                 }

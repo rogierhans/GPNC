@@ -69,8 +69,6 @@ namespace GPNC
             foreach (int id in contractionList.Skip(1))
             {
                 first = Contraction(first, id);
-                //print();
-                //Console.WriteLine(id);
             }
             return first;
         }

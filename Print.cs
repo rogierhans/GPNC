@@ -48,7 +48,7 @@ namespace GPNC
             //{
             //    HashSet<int> par1 = realPS[e.To];
             //    HashSet<int> par2 = realPS[e.From];
-            //    PrintCutOfTwoFragments(OG, nodes, par1, par2, realEdges, "1"+ e.To + "" + e.From);
+            //    PrintCutOfTwoFragments(OG, nodes, par1, par2, realEdges, "1" + e.To + "" + e.From);
             //}
             PrintCutsOnGraph(nodes,OG,G, realEdges, filename);
 
@@ -59,7 +59,7 @@ namespace GPNC
             Color result;
             double rd = r.NextDouble();
             if (rd < 0.2) { result = Color.Red; }
-            else if (rd < 0.4) { result = Color.Blue; }
+            else if (rd < 0.4) { result = Color.Orange; }
             else if (rd < 0.6) { result = Color.Green; }
             else if (rd < 0.8) { result = Color.White; }
             else { result = Color.Yellow; }
@@ -197,7 +197,7 @@ namespace GPNC
             RectangleF rectf = new RectangleF(size - 100, size-100, size, size);
             int count = 0;
             G.GetAllArcs().ForEach(x => count += G.getWeight(x.To, x.From));
-            gr.DrawString(count.ToString(), new Font("Tahoma", 8), Brushes.White, rectf);
+            gr.DrawString(count.ToString(), new Font("Tahoma", 8*(size /1000)), Brushes.White, rectf);
             var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
             filename + "a.png";
             bmp.Save(path);
@@ -243,48 +243,91 @@ namespace GPNC
                 int w = e.From;
                 NodePoint np1 = nodes[v];
                 NodePoint np2 = nodes[w];
-                gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
-                gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
-                gr.DrawLine(new Pen(Color.Blue,3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
+                gr.DrawEllipse(new Pen(Color.Blue, 15), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
+                gr.DrawEllipse(new Pen(Color.Blue, 15), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
+                gr.DrawLine(new Pen(Color.Blue,9), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
             }
-            RectangleF rectf = new RectangleF(size-100, size - 100, size, size);
-            gr.DrawString(cuts.Count.ToString(), new Font("Tahoma", 8), Brushes.White, rectf);
+            RectangleF rectf = new RectangleF(size - 100 * (size / 1000), size - 100 * (size / 1000), size, size);
+            gr.DrawString(cuts.Count.ToString(), new Font("Tahoma", 8 * (size / 1000)), Brushes.White, rectf);
             var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
-                filename + "b.png";
+                filename + cuts.Count.ToString()+"b.png";
             bmp.Save(path);
 
         }
-        public static void PrintCutFound(Dictionary<int, NodePoint> nodes, List<int> subGraph, List<int> partition, List<int> core, String filename)
+        public static void PrintCutFound(Dictionary<int, NodePoint> nodes,Graph G, List<int> subGraph, List<int> partition, HashSet<int> par, List<int> core, String filename)
         {
-
-            var bmp = new Bitmap(4000, 4000);
+            int size = 2000;
+            var bmp = new Bitmap(size, size);
             var gr = Graphics.FromImage(bmp);
 
+            int maxLati = G.nodes.Max(x => nodes[x].lati);
+            int minLati = G.nodes.Min(x => nodes[x].lati);
+            int maxLongi = G.nodes.Max(x => nodes[x].longi);
+            int minLongi = G.nodes.Min(x => nodes[x].longi);
+            foreach (Edge e in G.GetAllArcs()) {
+                if ((par.Contains(e.To) && !par.Contains(e.From)) || (!par.Contains(e.To) && par.Contains(e.From))) {
+                    NodePoint np1 = nodes[e.To];
+                    NodePoint np2 = nodes[e.From];
+                    gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
+                    gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
+                    gr.DrawLine(new Pen(Color.Blue, 3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
 
-            foreach (NodePoint np in nodes.Values)
-            {
-                gr.FillRectangle(Brushes.Red, np.x, np.y, 1, 1);
+                }
             }
 
             subGraph.ForEach(n =>
             {
                 NodePoint np = nodes[n];
-                gr.FillRectangle(Brushes.Yellow, np.x, np.y, 1, 1);
+                gr.FillRectangle(Brushes.Red, calcX(np, minLongi, maxLongi, size), calcY(np, minLati, maxLati, size), 3, 3);
             });
             partition.ForEach(n =>
             {
                 NodePoint np = nodes[n];
-                gr.FillRectangle(Brushes.Blue, np.x, np.y, 1, 1);
+                gr.FillRectangle(Brushes.Yellow, calcX(np, minLongi, maxLongi, size), calcY(np, minLati, maxLati, size), 3, 3);
             });
             core.ForEach(n =>
             {
                 NodePoint np = nodes[n];
-                gr.FillRectangle(Brushes.Green, np.x, np.y, 1, 1);
+                gr.FillRectangle(Brushes.Green, calcX(np, minLongi, maxLongi, size), calcY(np, minLati, maxLati, size), 3, 3);
             });
             var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
                 filename + "Cut.png";
             bmp.Save(path);
 
+        }
+
+        public static void DrawMap(Graph OG ,Graph G, Dictionary<int, NodePoint> nodes,string name) {
+            int size = 20000;
+            var bmp = new Bitmap(size, size);
+            var gr = Graphics.FromImage(bmp);
+            int maxLati = G.nodes.Max(x => nodes[x].lati);
+            int minLati = G.nodes.Min(x => nodes[x].lati);
+            int maxLongi = G.nodes.Max(x => nodes[x].longi);
+            int minLongi = G.nodes.Min(x => nodes[x].longi);
+            Random r = new Random();
+            foreach (Edge e in OG.GetAllArcs())
+            {
+
+                NodePoint np1 = nodes[e.To];
+                NodePoint np2 = nodes[e.From];
+                gr.DrawEllipse(new Pen(Color.Yellow, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
+                gr.DrawEllipse(new Pen(Color.Yellow, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
+                gr.DrawLine(new Pen(Color.Yellow, 3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
+
+            }
+            foreach (Edge e in G.GetAllArcs())
+            {
+
+                    NodePoint np1 = nodes[e.To];
+                    NodePoint np2 = nodes[e.From];
+                    gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
+                    gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
+                    gr.DrawLine(new Pen(Color.Blue, 3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
+
+            }
+
+            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\FliterMap"+name+".png";
+            bmp.Save(path);
         }
     }
 }
