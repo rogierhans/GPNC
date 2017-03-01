@@ -18,7 +18,7 @@ namespace GPNC
         {
             double alpha = 1;
 
-            int U = 100000;
+            int U = 25000;
 
             ////read graph
             //Graph G = Parser.ParseCSVFile();
@@ -50,12 +50,23 @@ namespace GPNC
             Graph OG = IOGraph.ReadGraph("OG");
             Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
 
+            //double f = 10;
+            //Graph G = IOGraph.ReadGraph("RG");
+            //HashSet<Edge> cuts = NaturalCut.MakeCuts(nodes, G, U, alpha, f);
+            //List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
+            //ps.ForEach(x => G.ContractList(x));
+            //Graph FG = G.CreateSubGraph(G.nodes.ToList());
+            //Console.WriteLine(G.nodes.Count);
+            //G.ApplyGreedyAlgorithm(U);
+            //G = LocalSearch.Search1(G, FG, U);
+            //Print.makePrints(G, OG, nodes,"000check");
 
-            for (double f = 15; f < 30; f = f + 5)
+
+            for (double f = 10; f < 30; f = f + 10)
             {
 
                 int allCuts = 0;
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < 5; i++)
                 {
                     Graph G = IOGraph.ReadGraph("RG");
                     HashSet<Edge> cuts = NaturalCut.MakeCuts(nodes, G, U, alpha, f);
@@ -71,7 +82,7 @@ namespace GPNC
                         cut += G.getWeight(e.To, e.From);
                     }
                     allCuts += cut;
-                    Print.makePrints(G, OG, nodes, "Coref" + f + "ac" + (double)allCuts / (i + 1) + "");
+                    Print.makePrints(G, OG, nodes, "U25000Coref" + f + "ac" + (double)allCuts / (i + 1) + "");
 
                 }
             }

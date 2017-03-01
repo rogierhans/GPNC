@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BFS.cs" />
+    <Compile Include="CutFinder.cs" />
     <Compile Include="EdgeStructure.cs" />
     <Compile Include="Filter.cs" />
     <Compile Include="FindFragments.cs" />

@@ -95,7 +95,7 @@ namespace GPNC
 
             if (!AllWeights[v].ContainsKey(w))
             {
-                AllWeights[v].Add(w, weight);
+                AllWeights[v][w] =weight;
                 AllReverseNeighbours[w].Add(v);
             }
             else
