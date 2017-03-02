@@ -24,6 +24,7 @@ namespace GPNC
 
             HashSet<Edge> allCuts = new HashSet<Edge>();
             Random rnd = new Random();
+            ImprovedCutFinder cutFinder = new ImprovedCutFinder(nodes,G,U,alpha,f);
             while (allNodes.Count > 0)
             {
 
@@ -32,8 +33,8 @@ namespace GPNC
                 Tuple<List<int>, List<Edge>> partitionAndCut = GetPartitionAndCut(G, bfs);
 
                 //removes all nodes that are inside the cut
-                //partitionAndCut.Item1.ForEach(x => allNodes.Remove(x));
-                bfs.Core.ForEach(x => allNodes.Remove(x));
+                partitionAndCut.Item1.ForEach(x => allNodes.Remove(x));
+                //bfs.Core.ForEach(x => allNodes.Remove(x));
 
                 //adds all cutEdges
                 partitionAndCut.Item2.ForEach(x => allCuts.Add(x));

@@ -18,7 +18,7 @@ namespace GPNC
         {
             double alpha = 1;
 
-            int U = 100000;
+            int U = 25000;
 
             ////read graph
             //Graph G = Parser.ParseCSVFile();
@@ -51,11 +51,11 @@ namespace GPNC
             Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
 
 
-            for (double f = 15; f < 30; f = f + 5)
+            
+            for (double f = 10; f <= 20; f = f + 5)
             {
-
                 int allCuts = 0;
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < 10; i++)
                 {
                     Graph G = IOGraph.ReadGraph("RG");
                     HashSet<Edge> cuts = NaturalCut.MakeCuts(nodes, G, U, alpha, f);
@@ -71,7 +71,7 @@ namespace GPNC
                         cut += G.getWeight(e.To, e.From);
                     }
                     allCuts += cut;
-                    Print.makePrints(G, OG, nodes, "Coref" + f + "ac" + (double)allCuts / (i + 1) + "");
+                    Print.makePrints(G, OG, nodes, "RealCoref" + f + "ac" + (double)allCuts / (i + 1) + "");
 
                 }
             }
