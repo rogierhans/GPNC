@@ -17,64 +17,62 @@ namespace GPNC
         static void Main(string[] args)
         {
             double alpha = 1;
+            int U = 2500;
+            double f = 20;
+            string map = "LUX";
+            string Fragmented = "FG";
+            string Solution = "SG";
+            //Find natural cuts and contract them
 
-            int U = 25000;
+            Graph G = GetFilteredGraph(map);
+            HashSet<Edge> cuts = NaturalCut.MakeCuts(null, G, U, alpha, f);
+            List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
+            ps.ForEach(x => { int v = G.ContractList(x); });
+            IOGraph.WriteGraph(G,  map + Fragmented + U / 1000);
+            Graph FG = G.CreateSubGraph(G.nodes.ToList());
+            G.ApplyGreedyAlgorithm(U);
+            G = LocalSearch.Search1(G, FG, U);
+            IOGraph.WriteGraph(G, map + Solution + U / 1000);
+            Graph OG = GetOriginalGraph(map);
+            var nodes = Parser.ParseNodes(OG, map);
+            Print.makePrints(G, OG, nodes, U / 1000 + "f" + f + map);
 
-            ////read graph
-            //Graph G = Parser.ParseCSVFile();
-            //Console.WriteLine(G.nodes.Count);
-
-            ////Filter unconnected nodes
-            //G = Filter.ConnectedComponent(G);
-
-            ////copy original graph
-            //Graph OG = G.CreateSubGraph(G.nodes.ToList());
-            //Console.WriteLine(G.nodes.Count);
-            //IOGraph.WriteGraph(OG, "OG");
-
-            ////Contract One degree
-            //Filter.RemoveOneDegree(G);
-            //Console.WriteLine(G.nodes.Count);
-
-            ////Contract two degree
-            //Filter.RemoveTwoDegree(G);
-            //Console.WriteLine(G.nodes.Count);
-            //IOGraph.WriteGraph(G, "RG");
-            ////Graph G = IOGraph.ReadGraph("RG");
-
-            ////Find natural cuts and contract them
-            //HashSet<Edge> cuts = NaturalCut.MakeCuts(G, U, alpha, f);
-            //List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
-            //ps.ForEach(x => { int v = G.ContractList(x); });
-            //IOGraph.WriteGraph(G, "FG");
-            Graph OG = IOGraph.ReadGraph("OG");
-            Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
+            //Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
+            //foreach (Edge e in G.GetAllArcs())
+            //{
+            //    cut += G.getWeight(e.To, e.From);
+            //}
+            //Print.makePrints(G, OG, nodes, "firstMap");
 
 
-            
-            for (double f = 10; f <= 20; f = f + 5)
-            {
-                int allCuts = 0;
-                for (int i = 0; i < 10; i++)
-                {
-                    Graph G = IOGraph.ReadGraph("RG");
-                    HashSet<Edge> cuts = NaturalCut.MakeCuts(nodes, G, U, alpha, f);
-                    List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
-                    ps.ForEach(x => G.ContractList(x));
-                    Graph FG = G.CreateSubGraph(G.nodes.ToList());
-                    Console.WriteLine(G.nodes.Count);
-                    G.ApplyGreedyAlgorithm(U);
-                    G = LocalSearch.Search1(G, FG, U);
-                    int cut = 0;
-                    foreach (Edge e in G.GetAllArcs())
-                    {
-                        cut += G.getWeight(e.To, e.From);
-                    }
-                    allCuts += cut;
-                    Print.makePrints(G, OG, nodes, "RealCoref" + f + "ac" + (double)allCuts / (i + 1) + "");
+            //Graph OG = IOGraph.ReadGraph("OG");
+            //Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
 
-                }
-            }
+
+
+            //for (double f = 10; f <= 20; f = f + 5)
+            //{
+            //    int allCuts = 0;
+            //    for (int i = 0; i < 10; i++)
+            //    {
+            //        //Graph G = IOGraph.ReadGraph("RG");
+            //        HashSet<Edge> cuts = NaturalCut.MakeCuts(null, G, U, alpha, f);
+            //        List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
+            //        ps.ForEach(x => G.ContractList(x));
+            //        Graph FG = G.CreateSubGraph(G.nodes.ToList());
+            //        Console.WriteLine(G.nodes.Count);
+            //        G.ApplyGreedyAlgorithm(U);
+            //        G = LocalSearch.Search1(G, FG, U);
+            //        int cut = 0;
+            //        foreach (Edge e in G.GetAllArcs())
+            //        {
+            //            cut += G.getWeight(e.To, e.From);
+            //        }
+            //        allCuts += cut;
+            //        //Print.makePrints(G, OG, nodes, "RealCoref" + f + "ac" + (double)allCuts / (i + 1) + "");
+
+            //    }
+            //}
 
 
 
@@ -95,17 +93,68 @@ namespace GPNC
 
             //Print.makePrints(G, OG, nodes);
 
-            Console.ReadLine();
+
+        }
+        public static Graph GetFilteredGraph(string map)
+        {
+            string Filter2 = "F2";
+            string Filter1 = "F1";
+            string OriginalGraph = "OG";
+            string Unfiltered = "UF";
+
+            if (IOGraph.DoesGraphsExists(map + Filter2))
+            {
+                return IOGraph.ReadGraph(map + Filter2);
+            }
+            else if (IOGraph.DoesGraphsExists(map + Filter1))
+            {
+                Graph G = IOGraph.ReadGraph(map + Filter1);
+                Filter.RemoveTwoDegree(G);
+                IOGraph.WriteGraph(G, map + Filter2);
+                return G;
+            }
+            else if (IOGraph.DoesGraphsExists(map + OriginalGraph))
+            {
+                Graph G = IOGraph.ReadGraph(map + OriginalGraph);
+                Filter.RemoveOneDegree(G);
+                IOGraph.WriteGraph(G, map + Filter1);
+                Filter.RemoveTwoDegree(G);
+                IOGraph.WriteGraph(G, map + Filter2);
+                return G;
+            }
+            else if (IOGraph.DoesGraphsExists(map + Unfiltered))
+            {
+                Graph G = IOGraph.ReadGraph(map + Unfiltered);
+                G = Filter.ConnectedComponent(G);
+                IOGraph.WriteGraph(G, map + OriginalGraph);
+                Filter.RemoveOneDegree(G);
+                IOGraph.WriteGraph(G, map + Filter1);
+                Filter.RemoveTwoDegree(G);
+                IOGraph.WriteGraph(G, map + Filter2);
+                return G;
+            }
+            else
+            {
+
+                Graph G = Parser.ParseCSVFile(map);
+                IOGraph.WriteGraph(G, map + Unfiltered);
+                G = Filter.ConnectedComponent(G);
+                IOGraph.WriteGraph(G, map + OriginalGraph);
+                Filter.RemoveOneDegree(G);
+                IOGraph.WriteGraph(G, map + Filter1);
+                Filter.RemoveTwoDegree(G);
+                IOGraph.WriteGraph(G, map + Filter2);
+                return G;
+            }
+        }
+
+        public static Graph GetOriginalGraph(string map) {
+            string OriginalGraph = "OG";
+            return IOGraph.ReadGraph(map + OriginalGraph);
         }
     }
 
-    //Graph test = G.CreateSubGraph(G.nodes.ToList());
-    //var now = DateTime.Now.Second;
-    //test = FindFragments.FastContraction(test,cuts,U);
-    //        Console.WriteLine(DateTime.Now.Second -  now);
-    //        Console.ReadLine();
-    //        now = DateTime.Now.Second;
-
+   
     public struct NodePoint
     {
         public int x;

@@ -12,21 +12,10 @@ namespace GPNC
 {
     static class Print
     {
+        public static readonly string location = "F:\\Users\\Rogier\\Desktop\\Pictures\\";
         public static void makePrints(Graph G, Graph OG, Dictionary<int,NodePoint> nodes,string filename) {
             var realPS = Uncontract.GetPartitions(G, OG);
-            //print(G, nodes, filename);
-
-
             List<Edge> realEdges = new List<Edge>();
-
-
-
-
-
-
-
-
-
             foreach (Edge e in G.GetAllArcs())
             {
                 HashSet<int> par1 = realPS[e.To];
@@ -41,17 +30,9 @@ namespace GPNC
                         }
                     }
                 }
-
             }
 
-            //foreach (Edge e in G.GetAllArcs())
-            //{
-            //    HashSet<int> par1 = realPS[e.To];
-            //    HashSet<int> par2 = realPS[e.From];
-            //    PrintCutOfTwoFragments(OG, nodes, par1, par2, realEdges, "1" + e.To + "" + e.From);
-            //}
             PrintCutsOnGraph(nodes,OG,G, realEdges, filename);
-
         }
 
         public static Color randomColor(Random r)
@@ -219,10 +200,6 @@ namespace GPNC
                 Pen pen = new Pen(randomColor(r));
                 pens[id] = pen;
             }
-            //foreach (NodePoint np in nodes.Values)
-            //{
-            //    gr.FillRectangle(Brushes.Red, calcX(np, minLongi, maxLongi, size), calcY(np, minLati, maxLati, size), 1, 1);
-            //}
             foreach (Edge e in OG.GetAllArcs())
             {
                 int v = e.To;
@@ -249,8 +226,8 @@ namespace GPNC
             }
             RectangleF rectf = new RectangleF(size - 100 * (size / 1000), size - 100 * (size / 1000), size, size);
             gr.DrawString(cuts.Count.ToString(), new Font("Tahoma", 8 * (size / 1000)), Brushes.White, rectf);
-            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
-                filename + cuts.Count.ToString()+"b.png";
+            var path = location +
+                filename + cuts.Count.ToString() +".bmp";
             bmp.Save(path);
 
         }
@@ -296,7 +273,7 @@ namespace GPNC
 
         }
 
-        public static void DrawMap(Graph OG ,Graph G, Dictionary<int, NodePoint> nodes,string name) {
+        public static void DrawChagedMap(Graph OG ,Graph G, Dictionary<int, NodePoint> nodes,string name) {
             int size = 20000;
             var bmp = new Bitmap(size, size);
             var gr = Graphics.FromImage(bmp);
@@ -327,6 +304,36 @@ namespace GPNC
             }
 
             var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\FliterMap"+name+".png";
+            bmp.Save(path);
+        }
+        public static void DrawMap(Graph G, Dictionary<int, int> dict, Dictionary<int, NodePoint> nodes, string name)
+        {
+            int size = 20000;
+            var bmp = new Bitmap(size, size);
+            var gr = Graphics.FromImage(bmp);
+            int maxLati = G.nodes.Max(x => nodes[x].lati);
+            int minLati = G.nodes.Min(x => nodes[x].lati);
+            int maxLongi = G.nodes.Max(x => nodes[x].longi);
+            int minLongi = G.nodes.Min(x => nodes[x].longi);
+            Random r = new Random();
+            foreach (Edge e in G.GetAllArcs())
+            {
+
+                NodePoint np1 = nodes[e.To];
+                NodePoint np2 = nodes[e.From];
+                gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
+                gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
+
+                gr.DrawLine(new Pen(Color.Blue, 3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
+
+            }
+            foreach(var kvp in dict) {
+                NodePoint np1 = nodes[kvp.Key];
+                RectangleF rectf = new RectangleF(calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 100, 100);
+                gr.DrawString(kvp.Value.ToString(), new Font("Tahoma", 16), Brushes.White, rectf);
+            }
+
+            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\TheMap" + name + ".png";
             bmp.Save(path);
         }
     }

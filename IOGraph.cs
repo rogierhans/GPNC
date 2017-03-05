@@ -9,7 +9,14 @@ namespace GPNC
 {
     class IOGraph
     {
+        public static readonly string location = "F:\\Users\\Rogier\\Desktop\\Graphs\\";
 
+        public static bool DoesGraphsExists(string filename) {
+            var pathNodes = location + filename + "nodes.csv";
+            var pathArcs = location + filename + "arcs.csv";
+            var pathParents = location + filename + "parents.csv";
+            return File.Exists(pathNodes) && File.Exists(pathArcs) && File.Exists(pathParents);
+        }
         public static void WriteGraph(Graph G, string filename)
         {
             List<string> AllLinesNodes = new List<string>();
@@ -21,7 +28,7 @@ namespace GPNC
                 line[1] = G.Size[id].ToString();
                 AllLinesNodes.Add(String.Join(",", line));
             }
-            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "nodes.csv";
+            var path = location + filename + "nodes.csv";
             File.WriteAllLines(path, AllLinesNodes.ToArray());
 
             List<string> AllLinesArcs = new List<string>();
@@ -39,7 +46,7 @@ namespace GPNC
                     AllLinesArcs.Add(String.Join(",", line));
                 }
             }
-            path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "arcs.csv";
+            path = location + filename + "arcs.csv";
             File.WriteAllLines(path, AllLinesArcs.ToArray());
 
 
@@ -54,14 +61,14 @@ namespace GPNC
                 AllParents.Add(String.Join(",", line));
 
             }
-            path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "parents.csv";
+            path = location + filename + "parents.csv";
             File.WriteAllLines(path, AllParents.ToArray());
 
         }
         public static Graph ReadGraph(string filename) {
-            var pathNodes = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "nodes.csv";
-            var pathArcs = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "arcs.csv";
-            var pathParents = "F:\\Users\\Rogier\\Desktop\\ROOS\\" + filename + "parents.csv";
+            var pathNodes = location + filename + "nodes.csv";
+            var pathArcs = location + filename + "arcs.csv";
+            var pathParents = location + filename + "parents.csv";
             Graph G = new Graph();
             Stream stream = File.Open(pathNodes, FileMode.Open);
             using (StreamReader sr = new StreamReader(stream))

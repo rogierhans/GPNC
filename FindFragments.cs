@@ -16,9 +16,7 @@ namespace GPNC
                 if (!cuts.Contains(x))
                 {
                     G.ContractionAlt(x.From, x.To);
-
                 }
-
             });
             return G;
         }
@@ -61,10 +59,11 @@ namespace GPNC
                     }
                 }
             }
-            int size = 0;
-            p.ForEach(x => size += G.Size[x]);
-            if (size > U)
-                Console.WriteLine(size + "Size");
+
+            //int size = 0;
+            //p.ForEach(x => size += G.Size[x]);
+            //if (size > U)
+            //    Console.WriteLine(size + "Size");
 
 
             return p;

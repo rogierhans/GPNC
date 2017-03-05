@@ -9,6 +9,7 @@ using System.IO;
 using System.Drawing.Imaging;
 using System.Reflection;
 using Google.OrTools.Graph;
+using System.Threading;
 
 namespace GPNC
 {
@@ -24,20 +25,39 @@ namespace GPNC
 
             HashSet<Edge> allCuts = new HashSet<Edge>();
             Random rnd = new Random();
-            ImprovedCutFinder cutFinder = new ImprovedCutFinder(nodes,G,U,alpha,f);
+            //ImprovedCutFinder cutFinder = new ImprovedCutFinder(nodes,G,U,alpha,f);
             while (allNodes.Count > 0)
             {
 
-                int rID = RandomID(allNodes, rnd);
-                BFS bfs = new BFS(G, U, alpha, f, rID);
-                Tuple<List<int>, List<Edge>> partitionAndCut = GetPartitionAndCut(G, bfs);
+                Thread[] threads = new Thread[8];
+                Tuple<List<int>, List<Edge>>[] partitionAndCuts = new Tuple<List<int>, List<Edge>>[8];
+                for (int i = 0; i < 8; i++)
+                {
+                    int index = i;
+                    Console.WriteLine(i);
+                    int rID = RandomID(allNodes, rnd);
+                    BFS bfs = new BFS(G, U, alpha, f, rID);
+                    threads[i] = new Thread(() =>
+                    {
+                        partitionAndCuts[index] = GetPartitionAndCut(G, bfs);
+                    });
+                    threads[i].Start();
+                }
+
+                for (int i = 0; i < threads.Length; i++)
+                {
+                    threads[i].Join();
+                }
+                //Tuple<List<int>, List<Edge>> partitionAndCut = GetPartitionAndCut(G, bfs);
+                //Tuple<List<int>, List<Edge>> partitionAndCut = cutFinder.FindCut(rID);
 
                 //removes all nodes that are inside the cut
-                partitionAndCut.Item1.ForEach(x => allNodes.Remove(x));
+                partitionAndCuts.ToList().ForEach(x =>  x.Item1.ForEach(y => allNodes.Remove(y)));
+
                 //bfs.Core.ForEach(x => allNodes.Remove(x));
 
                 //adds all cutEdges
-                partitionAndCut.Item2.ForEach(x => allCuts.Add(x));
+                partitionAndCuts.ToList().ForEach(x => x.Item2.ForEach(y => allCuts.Add(y)));
 
 
                 //remove latr

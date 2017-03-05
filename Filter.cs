@@ -10,7 +10,7 @@ namespace GPNC
     {
         public static Graph ConnectedComponent(Graph G)
         {
-            BFS bfs = new BFS(G, G.nodes.Count, 1, 10, 1);
+            BFS bfs = new BFS(G, G.nodes.Count, 1, 10, G.nodes.First());
             return G.CreateSubGraph(bfs.SubGraph);
         }
         public static void RemoveOneDegree(Graph G)

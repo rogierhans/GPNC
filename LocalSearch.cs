@@ -13,7 +13,7 @@ namespace GPNC
 
             Graph BestGraph = G;
             int BestWeight = int.MaxValue;
-            int runs = 1000;
+            int runs = 10000;
             Dictionary<int, HashSet<int>> partitions;
             Random rnd = new Random();
             int index = 0;
