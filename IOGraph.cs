@@ -112,6 +112,62 @@ namespace GPNC
             return G;
 
         }
+        public static Graph GetFilteredGraph(string map)
+        {
+            string Filter2 = "F2";
+            string Filter1 = "F1";
+            string OriginalGraph = "OG";
+            string Unfiltered = "UF";
 
+            if (IOGraph.DoesGraphsExists(map + Filter2))
+            {
+                return IOGraph.ReadGraph(map + Filter2);
+            }
+            else if (IOGraph.DoesGraphsExists(map + Filter1))
+            {
+                Graph G = IOGraph.ReadGraph(map + Filter1);
+                Filter.RemoveTwoDegree(G);
+                IOGraph.WriteGraph(G, map + Filter2);
+                return G;
+            }
+            else if (IOGraph.DoesGraphsExists(map + OriginalGraph))
+            {
+                Graph G = IOGraph.ReadGraph(map + OriginalGraph);
+                Filter.RemoveOneDegree(G);
+                IOGraph.WriteGraph(G, map + Filter1);
+                Filter.RemoveTwoDegree(G);
+                IOGraph.WriteGraph(G, map + Filter2);
+                return G;
+            }
+            else if (IOGraph.DoesGraphsExists(map + Unfiltered))
+            {
+                Graph G = IOGraph.ReadGraph(map + Unfiltered);
+                G = Filter.ConnectedComponent(G);
+                IOGraph.WriteGraph(G, map + OriginalGraph);
+                Filter.RemoveOneDegree(G);
+                IOGraph.WriteGraph(G, map + Filter1);
+                Filter.RemoveTwoDegree(G);
+                IOGraph.WriteGraph(G, map + Filter2);
+                return G;
+            }
+            else
+            {
+
+                Graph G = Parser.ParseCSVFile(map);
+                IOGraph.WriteGraph(G, map + Unfiltered);
+                G = Filter.ConnectedComponent(G);
+                IOGraph.WriteGraph(G, map + OriginalGraph);
+                Filter.RemoveOneDegree(G);
+                IOGraph.WriteGraph(G, map + Filter1);
+                Filter.RemoveTwoDegree(G);
+                IOGraph.WriteGraph(G, map + Filter2);
+                return G;
+            }
+        }
+        public static Graph GetOriginalGraph(string map)
+        {
+            string OriginalGraph = "OG";
+            return IOGraph.ReadGraph(map + OriginalGraph);
+        }
     }
 }

@@ -13,7 +13,7 @@ namespace GPNC
     static class Print
     {
         public static readonly string location = "F:\\Users\\Rogier\\Desktop\\Pictures\\";
-        public static void makePrints(Graph G, Graph OG, Dictionary<int,NodePoint> nodes,string filename) {
+        public static void makePrints(Graph G, Graph OG, Dictionary<int,GeoPoint> nodes,string filename) {
             var realPS = Uncontract.GetPartitions(G, OG);
             List<Edge> realEdges = new List<Edge>();
             foreach (Edge e in G.GetAllArcs())
@@ -74,124 +74,29 @@ namespace GPNC
             return result;
         }
 
-        public static void PrintCutOfTwoFragments(Graph OG, Dictionary<int, NodePoint> nodes, HashSet<int> par1, HashSet<int> par2, List<Edge> cuts, String filename)
-        {
-            int size = 4000;
-            var bmp = new Bitmap(size, size);
-            var gr = Graphics.FromImage(bmp);
-            List<int> subGraph = par1.Union(par2).ToList();
-            int maxLati = subGraph.Max(x => nodes[x].lati);
-            int minLati = subGraph.Min(x => nodes[x].lati);
-            int maxLongi = subGraph.Max(x => nodes[x].longi);
-            int minLongi = subGraph.Min(x => nodes[x].longi);
-            Graph subOG = OG.CreateSubGraphWithoutParent(subGraph);
-            List<Edge> subEdges = subOG.GetAllArcs();
-            subEdges.ForEach(e =>
-            {
-                int v = e.To;
-                int w = e.From;
-                NodePoint np1 = nodes[v];
-                NodePoint np2 = nodes[w];
-                gr.DrawLine(new Pen(Color.Yellow), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
-            });
-            subOG = OG.CreateSubGraphWithoutParent(par1.ToList());
-            subEdges = subOG.GetAllArcs();
-            subEdges.ForEach(e =>
-            {
-                int v = e.To;
-                int w = e.From;
-                NodePoint np1 = nodes[v];
-                NodePoint np2 = nodes[w];
-                gr.DrawLine(new Pen(Color.Red), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
-            });
-            subOG = OG.CreateSubGraphWithoutParent(par2.ToList());
-            subEdges = subOG.GetAllArcs();
-            subEdges.ForEach(e =>
-            {
-                int v = e.To;
-                int w = e.From;
-                NodePoint np1 = nodes[v];
-                NodePoint np2 = nodes[w];
-                gr.DrawLine(new Pen(Color.Green), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
-            });
-            int cutsCount = 0;
-            foreach (Edge e in cuts)
-            {
-                if ((par2.Contains(e.To) || par2.Contains(e.From)) && (par1.Contains(e.To) || par1.Contains(e.From)))
-                {
-                    cutsCount++;
-                    int v = e.To;
-                    int w = e.From;
-                    NodePoint np1 = nodes[v];
-                    NodePoint np2 = nodes[w];
-                    gr.FillRectangle(Brushes.Blue, calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 1, 1);
-                    gr.FillRectangle(Brushes.Blue, calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 1, 1);
-                    gr.DrawLine(new Pen(Color.Blue, 2), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
-                }
-            }
-            RectangleF rectf = new RectangleF(size - 100, size-100, size, size);
-            gr.DrawString(cutsCount.ToString(), new Font("Tahoma", 8), Brushes.White, rectf);
-            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
-    filename + ".png";
-            bmp.Save(path);
-        }
-        public static int calcX(NodePoint p, int minLongi, int maxLongi,int size)
+        public static int calcX(GeoPoint p, int minLongi, int maxLongi,int size)
         {
             int mx = maxLongi - minLongi;
-            int hx = p.longi - minLongi;
+            int hx = p.X - minLongi;
             return (int)(((float)hx / mx) * size);
         }
-        public static int calcY(NodePoint p, int minLati, int maxLati, int size)
+        public static int calcY(GeoPoint p, int minLati, int maxLati, int size)
         {
             int my = maxLati - minLati;
-            int hy = p.lati - minLati;
+            int hy = p.Y - minLati;
             return (int)(size - (((float)hy / my) * size));
 
         }
 
-        public static void print(Graph G, Dictionary<int, NodePoint> nodes,string filename)
-        {
-            int size = 4000;
-            var bmp = new Bitmap(size, size);
-            var gr = Graphics.FromImage(bmp);
-            Random r = new Random();
-            Dictionary<int, Brush> pens = new Dictionary<int, Brush>();
-            foreach (int id in G.nodes)
-            {
-
-                Brush pen = randomBrush2(r);
-                pens[id] = pen;
-            }
-            foreach (var kvp in nodes)
-            {
-                NodePoint np = kvp.Value;
-                int currentId = kvp.Key;
-                while (!pens.ContainsKey(currentId))
-                {
-                    currentId = G.Parent[currentId];
-
-                }
-                Brush pen = pens[currentId];
-                NodePoint cntnp = nodes[currentId];
-                gr.FillRectangle(pen, np.x, np.y, 1, 1);
-            }
-            RectangleF rectf = new RectangleF(size - 100, size-100, size, size);
-            int count = 0;
-            G.GetAllArcs().ForEach(x => count += G.getWeight(x.To, x.From));
-            gr.DrawString(count.ToString(), new Font("Tahoma", 8*(size /1000)), Brushes.White, rectf);
-            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
-            filename + "a.png";
-            bmp.Save(path);
-        }
-        public static void PrintCutsOnGraph(Dictionary<int, NodePoint> nodes, Graph OG,Graph G, List<Edge> cuts, String filename)
+        public static void PrintCutsOnGraph(Dictionary<int, GeoPoint> nodes, Graph OG,Graph G, List<Edge> cuts, String filename)
         {
             int size = 20000;
             var bmp = new Bitmap(size, size);
             var gr = Graphics.FromImage(bmp);
-            int maxLati = OG.nodes.Max(x => nodes[x].lati);
-            int minLati = OG.nodes.Min(x => nodes[x].lati);
-            int maxLongi = OG.nodes.Max(x => nodes[x].longi);
-            int minLongi = OG.nodes.Min(x => nodes[x].longi);
+            int maxLati = OG.nodes.Max(x => nodes[x].Y);
+            int minLati = OG.nodes.Min(x => nodes[x].Y);
+            int maxLongi = OG.nodes.Max(x => nodes[x].X);
+            int minLongi = OG.nodes.Min(x => nodes[x].X);
             Random r = new Random();
             Dictionary<int, Pen> pens = new Dictionary<int, Pen>();
             foreach (int id in G.nodes)
@@ -210,16 +115,16 @@ namespace GPNC
                     currentId = G.Parent[currentId];
                 }
                 Pen pen = pens[currentId];
-                NodePoint np1 = nodes[v];
-                NodePoint np2 = nodes[w];
+                GeoPoint np1 = nodes[v];
+                GeoPoint np2 = nodes[w];
                 gr.DrawLine(pen, calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
             }
             foreach (Edge e in cuts)
             {
                 int v = e.To;
                 int w = e.From;
-                NodePoint np1 = nodes[v];
-                NodePoint np2 = nodes[w];
+                GeoPoint np1 = nodes[v];
+                GeoPoint np2 = nodes[w];
                 gr.DrawEllipse(new Pen(Color.Blue, 15), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
                 gr.DrawEllipse(new Pen(Color.Blue, 15), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
                 gr.DrawLine(new Pen(Color.Blue,9), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
@@ -231,20 +136,20 @@ namespace GPNC
             bmp.Save(path);
 
         }
-        public static void PrintCutFound(Dictionary<int, NodePoint> nodes,Graph G, List<int> subGraph, List<int> partition, HashSet<int> par, List<int> core, String filename)
+        public static void PrintCutFound(Dictionary<int, GeoPoint> nodes,Graph G, List<int> subGraph, List<int> partition, HashSet<int> par, List<int> core, String filename)
         {
             int size = 2000;
             var bmp = new Bitmap(size, size);
             var gr = Graphics.FromImage(bmp);
 
-            int maxLati = G.nodes.Max(x => nodes[x].lati);
-            int minLati = G.nodes.Min(x => nodes[x].lati);
-            int maxLongi = G.nodes.Max(x => nodes[x].longi);
-            int minLongi = G.nodes.Min(x => nodes[x].longi);
+            int maxLati = G.nodes.Max(x => nodes[x].Y);
+            int minLati = G.nodes.Min(x => nodes[x].Y);
+            int maxLongi = G.nodes.Max(x => nodes[x].X);
+            int minLongi = G.nodes.Min(x => nodes[x].X);
             foreach (Edge e in G.GetAllArcs()) {
                 if ((par.Contains(e.To) && !par.Contains(e.From)) || (!par.Contains(e.To) && par.Contains(e.From))) {
-                    NodePoint np1 = nodes[e.To];
-                    NodePoint np2 = nodes[e.From];
+                    GeoPoint np1 = nodes[e.To];
+                    GeoPoint np2 = nodes[e.From];
                     gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
                     gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
                     gr.DrawLine(new Pen(Color.Blue, 3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
@@ -254,17 +159,17 @@ namespace GPNC
 
             subGraph.ForEach(n =>
             {
-                NodePoint np = nodes[n];
+                GeoPoint np = nodes[n];
                 gr.FillRectangle(Brushes.Red, calcX(np, minLongi, maxLongi, size), calcY(np, minLati, maxLati, size), 3, 3);
             });
             partition.ForEach(n =>
             {
-                NodePoint np = nodes[n];
+                GeoPoint np = nodes[n];
                 gr.FillRectangle(Brushes.Yellow, calcX(np, minLongi, maxLongi, size), calcY(np, minLati, maxLati, size), 3, 3);
             });
             core.ForEach(n =>
             {
-                NodePoint np = nodes[n];
+                GeoPoint np = nodes[n];
                 gr.FillRectangle(Brushes.Green, calcX(np, minLongi, maxLongi, size), calcY(np, minLati, maxLati, size), 3, 3);
             });
             var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\" +
@@ -273,20 +178,20 @@ namespace GPNC
 
         }
 
-        public static void DrawChagedMap(Graph OG ,Graph G, Dictionary<int, NodePoint> nodes,string name) {
+        public static void DrawChagedMap(Graph OG ,Graph G, Dictionary<int, GeoPoint> nodes,string name) {
             int size = 20000;
             var bmp = new Bitmap(size, size);
             var gr = Graphics.FromImage(bmp);
-            int maxLati = G.nodes.Max(x => nodes[x].lati);
-            int minLati = G.nodes.Min(x => nodes[x].lati);
-            int maxLongi = G.nodes.Max(x => nodes[x].longi);
-            int minLongi = G.nodes.Min(x => nodes[x].longi);
+            int maxLati = G.nodes.Max(x => nodes[x].Y);
+            int minLati = G.nodes.Min(x => nodes[x].Y);
+            int maxLongi = G.nodes.Max(x => nodes[x].X);
+            int minLongi = G.nodes.Min(x => nodes[x].X);
             Random r = new Random();
             foreach (Edge e in OG.GetAllArcs())
             {
 
-                NodePoint np1 = nodes[e.To];
-                NodePoint np2 = nodes[e.From];
+                GeoPoint np1 = nodes[e.To];
+                GeoPoint np2 = nodes[e.From];
                 gr.DrawEllipse(new Pen(Color.Yellow, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
                 gr.DrawEllipse(new Pen(Color.Yellow, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
                 gr.DrawLine(new Pen(Color.Yellow, 3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
@@ -295,8 +200,8 @@ namespace GPNC
             foreach (Edge e in G.GetAllArcs())
             {
 
-                    NodePoint np1 = nodes[e.To];
-                    NodePoint np2 = nodes[e.From];
+                    GeoPoint np1 = nodes[e.To];
+                    GeoPoint np2 = nodes[e.From];
                     gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
                     gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
                     gr.DrawLine(new Pen(Color.Blue, 3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
@@ -306,21 +211,21 @@ namespace GPNC
             var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\FliterMap"+name+".png";
             bmp.Save(path);
         }
-        public static void DrawMap(Graph G, Dictionary<int, int> dict, Dictionary<int, NodePoint> nodes, string name)
+        public static void DrawMap(Graph G, Dictionary<int, int> dict, Dictionary<int, GeoPoint> nodes, string name)
         {
             int size = 20000;
             var bmp = new Bitmap(size, size);
             var gr = Graphics.FromImage(bmp);
-            int maxLati = G.nodes.Max(x => nodes[x].lati);
-            int minLati = G.nodes.Min(x => nodes[x].lati);
-            int maxLongi = G.nodes.Max(x => nodes[x].longi);
-            int minLongi = G.nodes.Min(x => nodes[x].longi);
+            int maxLati = G.nodes.Max(x => nodes[x].Y);
+            int minLati = G.nodes.Min(x => nodes[x].Y);
+            int maxLongi = G.nodes.Max(x => nodes[x].X);
+            int minLongi = G.nodes.Min(x => nodes[x].X);
             Random r = new Random();
             foreach (Edge e in G.GetAllArcs())
             {
 
-                NodePoint np1 = nodes[e.To];
-                NodePoint np2 = nodes[e.From];
+                GeoPoint np1 = nodes[e.To];
+                GeoPoint np2 = nodes[e.From];
                 gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
                 gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
 
@@ -328,7 +233,7 @@ namespace GPNC
 
             }
             foreach(var kvp in dict) {
-                NodePoint np1 = nodes[kvp.Key];
+                GeoPoint np1 = nodes[kvp.Key];
                 RectangleF rectf = new RectangleF(calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 100, 100);
                 gr.DrawString(kvp.Value.ToString(), new Font("Tahoma", 16), Brushes.White, rectf);
             }

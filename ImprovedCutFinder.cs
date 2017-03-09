@@ -12,13 +12,13 @@ namespace GPNC
 {
     class ImprovedCutFinder
     {
-        Dictionary<int, NodePoint> Nodes;
+        Dictionary<int, GeoPoint> Nodes;
         Graph G;
         int U;
         double Alpha;
         double F;
 
-        public ImprovedCutFinder(Dictionary<int, NodePoint> nodes, Graph g, int u, double alpha, double f)
+        public ImprovedCutFinder(Dictionary<int, GeoPoint> nodes, Graph g, int u, double alpha, double f)
         {
             Nodes = nodes;
             G = g;

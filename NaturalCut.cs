@@ -15,7 +15,7 @@ namespace GPNC
 {
     static class NaturalCut
     {
-        public static HashSet<Edge> MakeCuts(Dictionary<int, NodePoint> nodes, Graph G, int U, double alpha, double f)
+        public static HashSet<Edge> MakeCuts(Dictionary<int, GeoPoint> nodes, Graph G, int U, double alpha, double f, bool removeCore)
         {
             HashSet<int> allNodes = new HashSet<int>();
             foreach (int id in G.nodes)
@@ -25,7 +25,6 @@ namespace GPNC
 
             HashSet<Edge> allCuts = new HashSet<Edge>();
             Random rnd = new Random();
-            //ImprovedCutFinder cutFinder = new ImprovedCutFinder(nodes,G,U,alpha,f);
             while (allNodes.Count > 0)
             {
 
@@ -35,29 +34,44 @@ namespace GPNC
                 {
                     int index = i;
                     Console.WriteLine(i);
-                    int rID = RandomID(allNodes, rnd);
-                    BFS bfs = new BFS(G, U, alpha, f, rID);
-                    threads[i] = new Thread(() =>
+                    if (allNodes.Count > 0)
                     {
-                        partitionAndCuts[index] = GetPartitionAndCut(G, bfs);
-                    });
-                    threads[i].Start();
+                        int rID = RandomID(allNodes, rnd);
+                        BFS bfs = new BFS(G, U, alpha, f, rID);
+                        bfs.Core.ForEach(x => allNodes.Remove(x));
+                        threads[i] = new Thread(() =>
+                        {
+                            partitionAndCuts[index] = GetPartitionAndCut(G, bfs);
+                        });
+                        threads[i].Start();
+                    }
+                    else
+                    {
+                        threads[i] = new Thread(() => { });
+                        threads[i].Start();
+                    }
+
                 }
 
                 for (int i = 0; i < threads.Length; i++)
                 {
                     threads[i].Join();
                 }
-                //Tuple<List<int>, List<Edge>> partitionAndCut = GetPartitionAndCut(G, bfs);
-                //Tuple<List<int>, List<Edge>> partitionAndCut = cutFinder.FindCut(rID);
+                if (!removeCore)
+                {
+                    partitionAndCuts.ToList().ForEach(
+                     x =>
+                     {
+                         if (x != null)
+                             x.Item1.ForEach(y => allNodes.Remove(y));
+                     });
+                }
 
-                //removes all nodes that are inside the cut
-                partitionAndCuts.ToList().ForEach(x =>  x.Item1.ForEach(y => allNodes.Remove(y)));
-
-                //bfs.Core.ForEach(x => allNodes.Remove(x));
-
-                //adds all cutEdges
-                partitionAndCuts.ToList().ForEach(x => x.Item2.ForEach(y => allCuts.Add(y)));
+                partitionAndCuts.ToList().ForEach(x =>
+                {
+                    if (x != null)
+                        x.Item2.ForEach(y => allCuts.Add(y));
+                });
 
 
                 //remove latr
@@ -65,7 +79,6 @@ namespace GPNC
                 //partitionAndCut.Item1.ForEach(e => parpar.Add(e));
                 //Print.PrintCutFound(nodes, G.CreateSubGraphWithoutParent(bfs.SubGraph), bfs.SubGraph, partitionAndCut.Item1, parpar, bfs.Core, allNodes.Count.ToString());
                 Console.WriteLine(allNodes.Count + "left");
-
             }
 
             return allCuts;

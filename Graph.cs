@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace GPNC
 {
-    class Graph
+    public class Graph
     {
         public HashSet<int> nodes = new HashSet<int>();
 

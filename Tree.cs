@@ -16,7 +16,7 @@ namespace GPNC
         public int Nodes;
         public int Edges;
 
-        public Tree(Graph OG, Graph G, int U, int MinSize, double alpha, double f, HashSet<int> BoundaryNodes, Dictionary<int, NodePoint> printNodes, string name)
+        public Tree(Graph OG, Graph G, int U, int MinSize, double alpha, double f, HashSet<int> BoundaryNodes, Dictionary<int, GeoPoint> printNodes, string name)
         {
             Console.WriteLine("Tree1");
             Graph SubGraph = G.CreateSubGraph(G.nodes.ToList());
@@ -29,7 +29,7 @@ namespace GPNC
             Console.WriteLine("NC:{0} with {1}", G.nodes.Count, MinSize);
             if (G.nodes.Count > MinSize)
             {
-                HashSet<Edge> cuts = NaturalCut.MakeCuts(null,G, U, alpha, f);
+                HashSet<Edge> cuts = NaturalCut.MakeCuts(null,G, U, alpha, f,false);
                 List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
                 ps.ForEach(x => G.ContractList(x));
                 Graph FG = G.CreateSubGraph(G.nodes.ToList());

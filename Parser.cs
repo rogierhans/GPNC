@@ -132,11 +132,10 @@ namespace GPNC
             return new Tuple<Graph, Dictionary<int, int>>(G,dict);
         }
 
-        public static Dictionary<int, NodePoint> ParseNodes(Graph G, string map)
+        public static Dictionary<int, GeoPoint> ParseNodes(Graph G, string map)
         {
-            Dictionary<int, NodePoint> dict = new Dictionary<int, NodePoint>();
+            Dictionary<int, GeoPoint> dict = new Dictionary<int, GeoPoint>();
             String path = location + map + "node.csv";
-            List<Node> nodes = new List<Node>();
             Stream stream = File.Open(path, FileMode.Open);
             using (StreamReader sr = new StreamReader(stream))
             {
@@ -144,48 +143,18 @@ namespace GPNC
                 while ((line = sr.ReadLine()) != null)
                 {
                     string[] values = line.Split(new char[] { ',' });
-                    Node n = new Node();
 
-                    n.id = Int32.Parse(values[1]);
-                    if (G.nodes.Contains(n.id))
+                    var id = Int32.Parse(values[1]);
+                    if (G.nodes.Contains(id))
                     {
-                        n.lati = Int32.Parse(values[2]);
-                        n.longi = Int32.Parse(values[3]);
-                        nodes.Add(n);
+                        var lati = Int32.Parse(values[2]);
+                        var longi = Int32.Parse(values[3]);
+                        dict[id] = new GeoPoint(longi,lati);
                     }
                 }
             }
-            int maxLati = nodes.Max(x => x.lati);
-            int minLati = nodes.Min(x => x.lati);
-            int maxLongi = nodes.Max(x => x.longi);
-            int minLongi = nodes.Min(x => x.longi);
-            int mx = maxLongi - minLongi;
-            int my = maxLati - minLati;
-            int hx;
-            int hy;
-            nodes.ForEach(n =>
-            {
-                hx = n.longi - minLongi;
-                hy = n.lati - minLati;
-                NodePoint p = new NodePoint();
-                p.x = (int)(((float)hx / mx) * 4000);
-                p.y = (int)(4000 - (((float)hy / my) * 4000));
-                p.lati = n.lati;
-                p.longi = n.longi;
-                dict[n.id] = p;
-            });
             Console.WriteLine("done");
             return dict;
         }
-
-
-
-        public struct Node
-        {
-            public int id;
-            public int lati;
-            public int longi;
-        }
-
     }
 }

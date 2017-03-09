@@ -17,25 +17,65 @@ namespace GPNC
         static void Main(string[] args)
         {
             double alpha = 1;
-            int U = 2500;
+            int U = 250000;
+            string map = "NL";
             double f = 20;
-            string map = "LUX";
-            string Fragmented = "FG";
-            string Solution = "SG";
-            //Find natural cuts and contract them
-
-            Graph G = GetFilteredGraph(map);
-            HashSet<Edge> cuts = NaturalCut.MakeCuts(null, G, U, alpha, f);
-            List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
-            ps.ForEach(x => { int v = G.ContractList(x); });
-            IOGraph.WriteGraph(G,  map + Fragmented + U / 1000);
-            Graph FG = G.CreateSubGraph(G.nodes.ToList());
-            G.ApplyGreedyAlgorithm(U);
-            G = LocalSearch.Search1(G, FG, U);
-            IOGraph.WriteGraph(G, map + Solution + U / 1000);
-            Graph OG = GetOriginalGraph(map);
+            //string Fragmented = "FG";
+            //string Solution = "SG";
+            bool RemoveCore = false;
+            Graph OG = IOGraph.GetOriginalGraph(map);
             var nodes = Parser.ParseNodes(OG, map);
-            Print.makePrints(G, OG, nodes, U / 1000 + "f" + f + map);
+            KDTree tree = new KDTree(nodes.Values.ToList(),0);
+            Console.WriteLine("ok");
+
+            tree.GetRange(nodes[10],nodes[0]).ForEach(gp => Console.WriteLine($"{gp.X}, {gp.Y}"));
+            Console.ReadLine();
+            return;
+            //Graph G = IOGraph.GetFilteredGraph(map);
+            //HashSet<Edge> cuts = NaturalCut.MakeCuts(null, G, U, alpha, f, RemoveCore);
+            //List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
+            //ps.ForEach(x => { int v = G.ContractList(x); });
+            //Graph FG = G.CreateSubGraph(G.nodes.ToList());
+            //G.ApplyGreedyAlgorithm(U);
+            //G = LocalSearch.Search1(G, FG, U);
+            //Graph OG = IOGraph.GetOriginalGraph(map);
+            //var nodes = Parser.ParseNodes(OG, map);
+            //Print.makePrints(G, OG, nodes, U / 1000 + "f" + f + map + (RemoveCore ? "T" : "F"));
+
+
+            ////Find natural cuts and contract them
+            //foreach (int U in new int[] {100000, 250000 })
+            //{
+            //    for (double f = 10; f <= 100; f = f + 5)
+            //    {
+            //        Report report = new Report(map, 25, U, alpha, f, RemoveCore);
+            //        report.WriteLogToFile();
+            //    }
+            //}
+            //RemoveCore = true;
+            ////Find natural cuts and contract them
+            //foreach (int U in new int[] {100000, 250000 })
+            //{
+            //    for (double f = 5; f <= 25; f = f + 5)
+            //    {
+            //        Report report = new Report(map, 25, U, alpha, f, RemoveCore);
+            //        report.WriteLogToFile();
+            //    }
+            //}
+            //for (int i = 0; i < 10; i++)
+            //{
+            //    Graph G = GetFilteredGraph(map);
+            //    HashSet<Edge> cuts = NaturalCut.MakeCuts(null, G, U, alpha, f, RemoveCore);
+            //    List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
+            //    ps.ForEach(x => { int v = G.ContractList(x); });
+            //    IOGraph.WriteGraph(G, map + Fragmented + U / 1000);
+            //    Graph FG = G.CreateSubGraph(G.nodes.ToList());
+            //    G.ApplyGreedyAlgorithm(U);
+            //    G = LocalSearch.Search1(G, FG, U);
+            //    IOGraph.WriteGraph(G, map + Solution + U / 1000);
+            //    Graph OG = GetOriginalGraph(map);
+            //    var nodes = Parser.ParseNodes(OG, map);
+            //    Print.makePrints(G, OG, nodes, U / 1000 + "f" + f + map + (RemoveCore ? "T" : "F"));
 
             //Dictionary<int, NodePoint> nodes = Parser.ParseNodes(OG);
             //foreach (Edge e in G.GetAllArcs())
@@ -95,72 +135,269 @@ namespace GPNC
 
 
         }
-        public static Graph GetFilteredGraph(string map)
+
+
+
+    }
+
+    public class Report
+    {
+        List<SingleRun> Runs = new List<SingleRun>();
+        string Map;
+        int U;
+        int N;
+        double Alpha;
+        double F;
+        bool RemoveCore;
+        string path = "F:\\Users\\Rogier\\Desktop\\Log\\";
+        public Report(string map, int n, int u, double alpha, double f, bool removeCore)
         {
-            string Filter2 = "F2";
-            string Filter1 = "F1";
-            string OriginalGraph = "OG";
-            string Unfiltered = "UF";
+            Map = map;
+            N = n;
+            U = u;
+            Alpha = alpha;
+            F = f;
+            RemoveCore = removeCore;
 
-            if (IOGraph.DoesGraphsExists(map + Filter2))
-            {
-                return IOGraph.ReadGraph(map + Filter2);
-            }
-            else if (IOGraph.DoesGraphsExists(map + Filter1))
-            {
-                Graph G = IOGraph.ReadGraph(map + Filter1);
-                Filter.RemoveTwoDegree(G);
-                IOGraph.WriteGraph(G, map + Filter2);
-                return G;
-            }
-            else if (IOGraph.DoesGraphsExists(map + OriginalGraph))
-            {
-                Graph G = IOGraph.ReadGraph(map + OriginalGraph);
-                Filter.RemoveOneDegree(G);
-                IOGraph.WriteGraph(G, map + Filter1);
-                Filter.RemoveTwoDegree(G);
-                IOGraph.WriteGraph(G, map + Filter2);
-                return G;
-            }
-            else if (IOGraph.DoesGraphsExists(map + Unfiltered))
-            {
-                Graph G = IOGraph.ReadGraph(map + Unfiltered);
-                G = Filter.ConnectedComponent(G);
-                IOGraph.WriteGraph(G, map + OriginalGraph);
-                Filter.RemoveOneDegree(G);
-                IOGraph.WriteGraph(G, map + Filter1);
-                Filter.RemoveTwoDegree(G);
-                IOGraph.WriteGraph(G, map + Filter2);
-                return G;
-            }
-            else
+            string Solution = "SG";
+            var pathLog = path + "log.csv";
+            for (int i = 0; i < n; i++)
             {
 
-                Graph G = Parser.ParseCSVFile(map);
-                IOGraph.WriteGraph(G, map + Unfiltered);
-                G = Filter.ConnectedComponent(G);
-                IOGraph.WriteGraph(G, map + OriginalGraph);
-                Filter.RemoveOneDegree(G);
-                IOGraph.WriteGraph(G, map + Filter1);
-                Filter.RemoveTwoDegree(G);
-                IOGraph.WriteGraph(G, map + Filter2);
-                return G;
+
+                // Create object to store information about the run
+                SingleRun run = new SingleRun();
+
+                //get the (filtered) graph
+                Graph G = IOGraph.GetFilteredGraph(map);
+
+                //create stopwatch to measure time
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+
+                //make cuts and get the fragments
+                HashSet<Edge> cuts = NaturalCut.MakeCuts(null, G, U, Alpha, F, RemoveCore);
+                List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
+                ps.ForEach(x => { int v = G.ContractList(x); });
+
+                // report the time
+                watch.Stop();
+                var timeCutFinding = watch.ElapsedMilliseconds;
+                run.TimeCutFinding = timeCutFinding;
+
+                // report the amount of fragments created
+                run.Fragments = G.nodes.Count;
+
+                //create a copy for later use
+                //TODO this could also be done in de Local Search
+                Graph FG = G.CreateSubGraph(G.nodes.ToList());
+
+                // restart the stopwatch
+                watch = System.Diagnostics.Stopwatch.StartNew();
+
+                // Do the intial greedy algorithm
+                G.ApplyGreedyAlgorithm(U);
+
+                //report the time
+                watch.Stop();
+                var timeGreedy = watch.ElapsedMilliseconds;
+                run.TimeGreedy = timeGreedy;
+
+
+                //count the intial cutweight
+                int weight = G.GetAllArcs().Sum(e => G.getWeight(e.To, e.From));
+                run.GreedyCut = weight;
+
+                // restart the stopwatch
+                watch = System.Diagnostics.Stopwatch.StartNew();
+
+                // do local search on Graph
+                G = LocalSearch.Search1(G, FG, U);
+
+                //report the time
+                watch.Stop();
+                var timeLocalSearch = watch.ElapsedMilliseconds;
+                run.TimeLocalSearch = timeLocalSearch;
+
+
+                //write the solution found to file
+                IOGraph.WriteGraph(G, map + Solution + U / 1000 + i + "q" + f + (RemoveCore ? "T" : "F"));
+
+                Graph OG = IOGraph.GetOriginalGraph(map);
+                run.SetValues(G, OG);
+                run.WriteToFile(pathLog);
+
+                Runs.Add(run);
             }
         }
 
-        public static Graph GetOriginalGraph(string map) {
-            string OriginalGraph = "OG";
-            return IOGraph.ReadGraph(map + OriginalGraph);
+        public void WriteLogToFile()
+        {
+            List<string> lines = new List<string>();
+            lines.Add(Runs.First().GetFirstLine());
+            lines.Add(GetAverages());
+
+            foreach (SingleRun run in Runs)
+            {
+                lines.Add(run.GetString());
+            }
+            File.WriteAllLines(path + Map + U / 1000 + F + N + (RemoveCore ? "T" : "F") + "report.csv", lines.ToArray());
+        }
+
+        private string GetAverages()
+        {
+            List<string> allAvgs = new List<string>();
+            double totalTimeCutFinding = 0;
+            double totalTimeGreedy = 0;
+            double totalTimeLocalSearch = 0;
+            int totalCQMMeasure = 0;
+            int totalBoundaryNodes = 0;
+            int totalGreedyCut = 0;
+            int totalCut = 0;
+            int totalFragments = 0;
+            foreach (SingleRun run in Runs)
+            {
+                totalTimeCutFinding += run.TimeCutFinding;
+                totalTimeGreedy += run.TimeGreedy;
+                totalTimeLocalSearch += run.TimeLocalSearch;
+                totalCQMMeasure += run.CQMMeasure;
+                totalBoundaryNodes += run.BoundaryNodes;
+                totalGreedyCut += run.GreedyCut;
+                totalCut += run.Cut;
+                totalFragments += run.Fragments;
+            }
+            foreach (SingleRun run in Runs)
+            {
+                allAvgs.Add(((int)totalTimeCutFinding / Runs.Count).ToString());
+                allAvgs.Add(((int)totalTimeGreedy / Runs.Count).ToString());
+                allAvgs.Add(((int)totalTimeLocalSearch / Runs.Count).ToString());
+                allAvgs.Add((totalCQMMeasure / Runs.Count).ToString());
+                allAvgs.Add((totalBoundaryNodes / Runs.Count).ToString());
+                allAvgs.Add((totalGreedyCut / Runs.Count).ToString());
+                allAvgs.Add((totalCut / Runs.Count).ToString());
+                allAvgs.Add((totalFragments / Runs.Count).ToString());
+            }
+            return String.Join(",", allAvgs);
         }
     }
 
-   
-    public struct NodePoint
+    public class SingleRun
     {
-        public int x;
-        public int y;
-        public int lati;
-        public int longi;
+        public double TimeCutFinding;
+        public double TimeGreedy;
+        public double TimeLocalSearch;
+        public int CQMMeasure;
+        public int BoundaryNodes;
+        public int GreedyCut;
+        public int Cut;
+        public int Fragments;
+
+        public void WriteToFile(string filename)
+        {
+            string line = GetString();
+            if (!File.Exists(filename))
+            {
+                using (StreamWriter sw = File.CreateText(filename))
+                {
+                    sw.WriteLine(GetFirstLine());
+                    sw.WriteLine(line);
+                }
+            }
+            else
+            {
+                using (StreamWriter sw = File.AppendText(filename))
+                {
+                    sw.WriteLine(line);
+                }
+            }
+        }
+
+        public string GetFirstLine()
+        {
+            return String.Join(",", new List<string>() { "Finding Cuts", "Greedy", "Local Search", "CQM Measure", "BoundaryNodes", "GreedyCut", "Cut", "Fragments" });
+        }
+
+        public string GetString()
+        {
+            List<string> info = new List<string>();
+            info.Add(TimeCutFinding.ToString());
+            info.Add(TimeGreedy.ToString());
+            info.Add(TimeLocalSearch.ToString());
+            info.Add(CQMMeasure.ToString());
+            info.Add(BoundaryNodes.ToString());
+            info.Add(GreedyCut.ToString());
+            info.Add(Cut.ToString());
+            info.Add(Fragments.ToString());
+            return String.Join(",", info);
+        }
+
+        private Dictionary<int, HashSet<int>> partitionToBoundaryNodes = new Dictionary<int, HashSet<int>>();
+        public void SetValues(Graph G, Graph OG)
+        {
+            var partitions = Uncontract.GetPartitions(G, OG);
+            foreach (int ids in partitions.Keys)
+            {
+                partitionToBoundaryNodes[ids] = new HashSet<int>();
+            }
+            List<Edge> cutEdges = new List<Edge>();
+            foreach (Edge e in G.GetAllArcs())
+            {
+                HashSet<int> par1 = partitions[e.From];
+                HashSet<int> par2 = partitions[e.To];
+                foreach (int from in par1)
+                {
+                    foreach (int to in OG.GetNeighbours(from))
+                    {
+                        if (par2.Contains(to))
+                        {
+                            partitionToBoundaryNodes[e.From].Add(from);
+                            partitionToBoundaryNodes[e.To].Add(to);
+                            cutEdges.Add(new Edge(from, to));
+                        }
+                    }
+                }
+            }
+            Cut = cutEdges.Count;
+
+            BoundaryNodes = 0;
+            partitionToBoundaryNodes.Values.ToList().ForEach(x => BoundaryNodes += x.Count);
+
+            CQMMeasure = -1;
+                //(int)QualityNode(G, OG, partitions);
+        }
+        public double QualityNode(Graph G, Graph OG, Dictionary<int, HashSet<int>> partitions)
+        {
+            double sum = 0;
+            double totalSize = G.nodes.Sum(x => G.Size[x]);
+            foreach (int i in G.nodes)
+            {
+                foreach (int j in G.nodes)
+                {
+
+                    if (i != j)
+                    {
+                        double pi = G.Size[i] / totalSize;
+                        double pj = G.Size[j] / totalSize;
+                        double value = pi * pj * (CountEdge(OG, partitions[i]) + CountEdge(OG, partitions[j]));
+                        sum += value;
+                    }
+                }
+            }
+            return SplitQuality(G) + sum;
+        }
+        public int CountEdge(Graph OG, HashSet<int> partition)
+        {
+            return OG.CreateSubGraph(partition.ToList()).GetAllArcs().Count;
+        }
+
+        public double SplitQuality(Graph G)
+        {
+            double sum = 0;
+            foreach (int id in G.nodes)
+            {
+                sum += Math.Pow(partitionToBoundaryNodes[id].Count, 1.5);
+            }
+            return sum + Cut;
+        }
     }
 
     public struct Edge
