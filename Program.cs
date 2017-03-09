@@ -16,6 +16,34 @@ namespace GPNC
     {
         static void Main(string[] args)
         {
+
+            List<GeoPoint> points = new List<GeoPoint>();
+            Random rng = new Random();
+            for (int i = 0; i < 10; i++)
+            {
+                int x = rng.Next() / 10000;
+                int y = rng.Next() / 10000;
+                points.Add(new GeoPoint(x, y));
+            }
+            points.ForEach(x => Console.WriteLine(x));
+            KDTree testTree = new KDTree(points, 0);
+            Console.WriteLine(testTree.ToString(0));
+            int minx = points.Min(gp => gp.X);
+            int miny = points.Min(gp => gp.Y);
+            testTree.GetRange(new Range(new GeoPoint(minx-100, miny-100), 200, 200)).ForEach(x => Console.WriteLine(x));
+            Console.WriteLine(testTree.Intersects(new Range(new GeoPoint(minx - 100, miny - 100), 200, 200)));
+
+
+
+
+
+
+
+
+
+
+            Console.ReadLine();
+            return;
             double alpha = 1;
             int U = 250000;
             string map = "NL";
@@ -26,9 +54,21 @@ namespace GPNC
             Graph OG = IOGraph.GetOriginalGraph(map);
             var nodes = Parser.ParseNodes(OG, map);
             KDTree tree = new KDTree(nodes.Values.ToList(),0);
-            Console.WriteLine("ok");
 
-            tree.GetRange(nodes[10],nodes[0]).ForEach(gp => Console.WriteLine($"{gp.X}, {gp.Y}"));
+            Dictionary<int, int> scores = new Dictionary<int, int>();
+            int distance = 2;
+            foreach (int id in OG.nodes)
+            {
+                GeoPoint gp = nodes[id];
+                Range range = new Range(new GeoPoint(gp.X - distance, gp.Y - distance), distance * 2, distance * 2);
+                int score = tree.GetRange(range).Count;
+                scores[id] = score;
+            }
+            scores.OrderBy(x => x.Value);
+            var kvp = scores.First();
+            var kvpl = scores.Last();
+            Console.WriteLine($"{kvp.Key} met {kvp.Value}");
+            Console.WriteLine($"{kvpl.Key} met {kvpl.Value}");
             Console.ReadLine();
             return;
             //Graph G = IOGraph.GetFilteredGraph(map);
@@ -399,6 +439,8 @@ namespace GPNC
             return sum + Cut;
         }
     }
+
+
 
     public struct Edge
     {

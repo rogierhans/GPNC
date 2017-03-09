@@ -28,7 +28,7 @@ namespace GPNC
                 int median = points.Count / 2;
                 Point = points[median];
                 List<GeoPoint> leftPoints = points.Take(median).ToList();
-                List<GeoPoint> rightPoints = points.Skip(median + 1).ToList();
+                List<GeoPoint> rightPoints = points.Skip(median).ToList();
                 if (leftPoints.Count > 0) left = new KDTree(leftPoints, depth + 1);
                 if (rightPoints.Count > 0) right = new KDTree(rightPoints, depth + 1);
                 min = new GeoPoint(points.Min(gp => gp.X), points.Min(gp => gp.Y));
@@ -36,33 +36,55 @@ namespace GPNC
             }
         }
 
-        public List<GeoPoint> GetRange(GeoPoint low, GeoPoint high)
+        internal string ToString(int v)
+        {
+            if (isLeaf())
+            {
+                return new String(' ', v) + "|" + Point.ToString();
+            }
+            else
+            {
+                return new String(' ', v) + "|" + "*" + Point.ToString() + "*" + "\n" + left.ToString(v + 1) + "\n" + right.ToString(v + 1);
+            }
+        }
+
+        public override string ToString()
+        {
+            if (isLeaf())
+            {
+                return $"{{ { Point} }}";
+            }
+            else
+            {
+                return $"{{{left}|||{right}}}";
+            }
+        }
+
+        public List<GeoPoint> GetRange(Range range)
         {
             var allPoints = new List<GeoPoint>();
-            if (!isLeaf())
-
-                allPoints.Add(Point);
-
+            if (isLeaf())
             {
-                if (left.IsFullyContained(low, high))
+                //mischien not correct ff testen
+                if (Intersects(range)) { allPoints.Add(Point); }
+            }
+            else
+            {
+                if (left.IsFullyContained(range))
+                {
+                    allPoints.AddRange(left.ReportPoints());
+                }
+                else if (left.Intersects(range))
+                {
+                    allPoints.AddRange(left.GetRange(range));
+                }
+                if (right.IsFullyContained(range))
                 {
                     allPoints.AddRange(right.ReportPoints());
                 }
-                else if (left.Intersects(low, high))
+                else if (right.Intersects(range))
                 {
-                    allPoints.AddRange(left.GetRange(low, high));
-                }
-                if (right != null)
-                {
-                    if (right.IsFullyContained(low, high))
-                    {
-                        allPoints.AddRange(right.ReportPoints());
-                    }
-                    else if (right.Intersects(low, high))
-                    {
-                        allPoints.AddRange(right.GetRange(low, high));
-
-                    }
+                    allPoints.AddRange(right.GetRange(range));
                 }
             }
             return allPoints;
@@ -98,25 +120,25 @@ namespace GPNC
             }
         }
 
-        public bool IsFullyContained(GeoPoint low, GeoPoint high)
+        public bool IsFullyContained(Range range)
         {
-            return (low.X <= min.X && low.Y <= min.Y) && (high.X >= max.X && high.Y >= max.Y);
+            return (range.Low.X <= min.X && range.Low.Y <= min.Y) && (range.High.X >= max.X && range.High.Y >= max.Y);
         }
 
-        private bool Intersects(GeoPoint low, GeoPoint high)
+        public bool Intersects(Range range)
         {
-            return (low.X <= min.X && low.Y <= min.Y) && (high.X >= max.X && high.Y >= max.Y);
+            return (min.X < range.High.X && max.X > range.Low.X && min.Y < range.High.Y && max.Y > range.Low.Y);
         }
 
-        private bool inLeftChild(GeoPoint low, GeoPoint high)
+        private bool inLeftChild(Range range)
         {
             if (evenDepth)
             {
-                return low.X <= Point.X && high.X <= Point.X;
+                return range.Low.X <= Point.X && range.High.X <= Point.X;
             }
             else
             {
-                return low.Y <= Point.Y && high.Y <= Point.Y;
+                return range.Low.Y <= Point.Y && range.High.Y <= Point.Y;
             }
         }
 
@@ -141,5 +163,26 @@ namespace GPNC
             X = x;
             Y = y;
         }
+
+        public override string ToString()
+        {
+            return $"({X},{Y})";
+        }
+    }
+
+    public struct Range
+    {
+        public GeoPoint Low;
+        public GeoPoint High;
+        public Range(GeoPoint start, int width, int height)
+        {
+            Low = start;
+            High = new GeoPoint(start.X + width, start.Y + height);
+        }
+        public override string ToString()
+        {
+            return $"[{Low} to {High}]";
+        }
+
     }
 }
