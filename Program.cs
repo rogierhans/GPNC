@@ -17,21 +17,37 @@ namespace GPNC
         static void Main(string[] args)
         {
 
-            List<GeoPoint> points = new List<GeoPoint>();
-            Random rng = new Random();
-            for (int i = 0; i < 10; i++)
-            {
-                int x = rng.Next() / 10000;
-                int y = rng.Next() / 10000;
-                points.Add(new GeoPoint(x, y));
-            }
-            points.ForEach(x => Console.WriteLine(x));
-            KDTree testTree = new KDTree(points, 0);
-            Console.WriteLine(testTree.ToString(0));
-            int minx = points.Min(gp => gp.X);
-            int miny = points.Min(gp => gp.Y);
-            testTree.GetRange(new Range(new GeoPoint(minx-100, miny-100), 200, 200)).ForEach(x => Console.WriteLine(x));
-            Console.WriteLine(testTree.Intersects(new Range(new GeoPoint(minx - 100, miny - 100), 200, 200)));
+            //List<GeoPoint> points = new List<GeoPoint>();
+            //Random rng = new Random();
+            //for (int i = 0; i < 10; i++)
+            //{
+            //    int x = rng.Next() / 10000;
+            //    int y = rng.Next() / 10000;
+            //    points.Add(new GeoPoint(x, y));
+            //}
+            //points.ForEach(x => Console.WriteLine(x));
+            //KDTree testTree = new KDTree(points, 0);
+            //Console.WriteLine(testTree.ToString(0));
+            //int minx = points.Min(gp => gp.X);
+            //int miny = points.Min(gp => gp.Y);
+            //GeoPoint GPMin = new GeoPoint(minx, miny);  
+            //GeoPoint GPMax = new GeoPoint(points.Max(x => x.X), points.Max(x => x.Y));
+            //Range allRange = new Range();
+            //allRange.Low = GPMin;
+            //allRange.High = GPMax;
+            //Console.WriteLine("ok");
+            //Console.WriteLine($"Deze man {allRange}");
+            //testTree.ReportPoints().ForEach(x => Console.WriteLine(x));
+            //Console.WriteLine("ok");
+
+            //int distance = 500;
+            //GeoPoint first = points.First();
+            //Range specific  = new Range(new GeoPoint(first.X - distance, first.Y - distance), distance *2, distance*2);
+            ////testTree.GetRange(new Range(new GeoPoint(minx-100, miny-100), 200, 200)).ForEach(x => Console.WriteLine(x));
+            //testTree.GetRange(specific).ForEach(x => Console.WriteLine(" xD"+x));
+            //Console.WriteLine(testTree.test(allRange));
+            ////testTree.makePicture(specific);
+            ////testTree.GetAllRange().ForEach(x => Console.WriteLine(x));
 
 
 
@@ -40,10 +56,8 @@ namespace GPNC
 
 
 
-
-
-            Console.ReadLine();
-            return;
+            //Console.ReadLine();
+            //return;
             double alpha = 1;
             int U = 250000;
             string map = "NL";
@@ -54,9 +68,8 @@ namespace GPNC
             Graph OG = IOGraph.GetOriginalGraph(map);
             var nodes = Parser.ParseNodes(OG, map);
             KDTree tree = new KDTree(nodes.Values.ToList(),0);
-
+            int distance = 500;
             Dictionary<int, int> scores = new Dictionary<int, int>();
-            int distance = 2;
             foreach (int id in OG.nodes)
             {
                 GeoPoint gp = nodes[id];

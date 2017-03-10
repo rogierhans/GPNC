@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Drawing;
+using System.IO;
+using System.Drawing.Imaging;
+using System.Reflection;
 
 namespace GPNC
 {
@@ -66,24 +70,31 @@ namespace GPNC
             if (isLeaf())
             {
                 //mischien not correct ff testen
-                if (Intersects(range)) { allPoints.Add(Point); }
+                Console.WriteLine("leaf");
+                if (IsFullyContained(range)) { allPoints.Add(Point); }
             }
             else
             {
                 if (left.IsFullyContained(range))
                 {
+                    Console.WriteLine("leftBranchF");
                     allPoints.AddRange(left.ReportPoints());
                 }
                 else if (left.Intersects(range))
                 {
+
+                    Console.WriteLine("leftInter");
                     allPoints.AddRange(left.GetRange(range));
                 }
                 if (right.IsFullyContained(range))
                 {
+                    Console.WriteLine("yolo");
                     allPoints.AddRange(right.ReportPoints());
                 }
                 else if (right.Intersects(range))
                 {
+
+                    Console.WriteLine("rightInter");
                     allPoints.AddRange(right.GetRange(range));
                 }
             }
@@ -110,24 +121,34 @@ namespace GPNC
             else
             {
                 List<GeoPoint> leftPoints = left.ReportPoints();
-                if (right != null)
-                {
-                    List<GeoPoint> rightPoints = right.ReportPoints();
-                    leftPoints.AddRange(rightPoints);
-                }
-                leftPoints.Add(Point);
+                leftPoints.AddRange(right.ReportPoints());
                 return leftPoints;
             }
         }
 
         public bool IsFullyContained(Range range)
         {
-            return (range.Low.X <= min.X && range.Low.Y <= min.Y) && (range.High.X >= max.X && range.High.Y >= max.Y);
+            if (isLeaf())
+            {
+                return (range.Low.X <= Point.X && range.Low.Y <= Point.Y) && (range.High.X >= Point.X && range.High.Y >= Point.Y);
+            }
+            else
+            {
+                return (range.Low.X <= min.X && range.Low.Y <= min.Y) && (range.High.X >= max.X && range.High.Y >= max.Y);
+            }
         }
 
         public bool Intersects(Range range)
         {
-            return (min.X < range.High.X && max.X > range.Low.X && min.Y < range.High.Y && max.Y > range.Low.Y);
+            if (isLeaf())
+            {
+                return (Point.X <= range.High.X && Point.X >= range.Low.X && Point.Y <= range.High.Y && Point.Y >= range.Low.Y);
+
+            }
+            else
+            {
+                return (min.X <= range.High.X && max.X >= range.Low.X && min.Y <= range.High.Y && max.Y >= range.Low.Y);
+            }
         }
 
         private bool inLeftChild(Range range)
@@ -151,6 +172,85 @@ namespace GPNC
         {
             return depth % 2 == 0;
         }
+
+        public bool test(Range r)
+        {
+            if (isLeaf())
+            {
+                bool leafcase = IsFullyContained(r);
+                if (!leafcase) Console.WriteLine(ToString(0) + "\n" + min + "en" + max);
+                return leafcase;
+            }
+            else
+            {
+                return IsFullyContained(r) && left.test(r) && right.test(r);
+            }
+        }
+
+        public List<Range> GetAllRange()
+        {
+            Range ownRange;
+            if (isLeaf())
+            {
+                return new List<Range>();
+            }
+            else
+            {
+
+                ownRange = new Range();
+                ownRange.Low = min;
+                ownRange.High = max;
+                var leftList = left.GetAllRange();
+                var rightList = right.GetAllRange();
+                leftList.AddRange(rightList);
+                leftList.Add(ownRange);
+                return leftList;
+            }
+        }
+        public void makePicture(Range realRange)
+        {
+            var location = "C:\\Users\\Roosje\\Desktop\\SAVE\\";
+
+            int size = 2000;
+            var bmp = new Bitmap(size, size);
+            var gr = Graphics.FromImage(bmp);
+            var ranges = GetAllRange();
+            int minX = ranges.Min(r => r.Low.X);
+            int maxX = ranges.Max(r => r.High.X);
+            int minY = ranges.Min(r => r.Low.Y);
+            int maxY = ranges.Max(r => r.High.Y);
+            foreach (Range r in ranges)
+            {
+                GeoPoint gp1 = r.Low;
+                GeoPoint gp2 = r.High;
+                int oneX = (int)(gp1.relativeX(minX, maxX) * size);
+                int oneY = (int)(gp1.relativeY(minY, maxY) * size);
+
+                int twoX = (int)(gp2.relativeX(minX, maxX) * size);
+                int twoY = (int)(gp2.relativeY(minY, maxY) * size);
+                gr.DrawRectangle(new Pen(Color.Red), oneX, oneY, twoX - oneX, twoY - oneY);
+                Console.WriteLine($"(({oneX},{oneY}),({twoX},{twoY}))");
+            }
+            foreach (GeoPoint gp in ReportPoints())
+            {
+                int oneX = (int)(gp.relativeX(minX, maxX) * size);
+                int oneY = (int)(gp.relativeY(minY, maxY) * size);
+                gr.DrawRectangle(new Pen(Color.Blue, 5), oneX, oneY, 1, 1);
+            }
+            {
+                GeoPoint gp1 = realRange.Low;
+                GeoPoint gp2 = realRange.High;
+                int oneX = (int)(gp1.relativeX(minX, maxX) * size);
+                int oneY = (int)(gp1.relativeY(minY, maxY) * size);
+
+                int twoX = (int)(gp2.relativeX(minX, maxX) * size);
+                int twoY = (int)(gp2.relativeY(minY, maxY) * size);
+                gr.DrawRectangle(new Pen(Color.Brown, 100), oneX, oneY, twoX - oneX, twoY - oneY);
+
+            }
+            var path = location + "KDTREE.bmp";
+            bmp.Save(path);
+        }
     }
 
     public struct GeoPoint
@@ -167,6 +267,15 @@ namespace GPNC
         public override string ToString()
         {
             return $"({X},{Y})";
+        }
+
+        public double relativeX(int minX, int maxX)
+        {
+            return (double)(X - minX) / (maxX - minX);
+        }
+        public double relativeY(int minY, int maxY)
+        {
+            return (double)(Y - minY) / (maxY - minY);
         }
     }
 
