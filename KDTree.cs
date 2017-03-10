@@ -19,8 +19,10 @@ namespace GPNC
 
         private GeoPoint min;
         private GeoPoint max;
+        private int TreeCount;
         public KDTree(List<GeoPoint> points, int depth)
         {
+            TreeCount = points.Count;
             evenDepth = isEven(depth);
             if (points.Count == 1)
             {
@@ -77,28 +79,61 @@ namespace GPNC
             {
                 if (left.IsFullyContained(range))
                 {
-                    Console.WriteLine("leftBranchF");
+                    //Console.WriteLine("leftBranchF");
                     allPoints.AddRange(left.ReportPoints());
                 }
                 else if (left.Intersects(range))
                 {
 
-                    Console.WriteLine("leftInter");
+                    //Console.WriteLine("leftInter");
                     allPoints.AddRange(left.GetRange(range));
                 }
                 if (right.IsFullyContained(range))
                 {
-                    Console.WriteLine("yolo");
+                    //Console.WriteLine("yolo");
                     allPoints.AddRange(right.ReportPoints());
                 }
                 else if (right.Intersects(range))
                 {
 
-                    Console.WriteLine("rightInter");
+                    //Console.WriteLine("rightInter");
                     allPoints.AddRange(right.GetRange(range));
                 }
             }
             return allPoints;
+        }
+
+        public int Count(Range range)
+        {
+            var count = 0;
+            if (isLeaf())
+            {
+                if (IsFullyContained(range)) { count += 1; }
+            }
+            else
+            {
+                if (left.IsFullyContained(range))
+                {
+                    count += left.TreeCount;
+                }
+                else if (left.Intersects(range))
+                {
+
+                    count += (left.Count(range));
+                }
+                if (right.IsFullyContained(range))
+                {
+                    //Console.WriteLine("yolo");
+                    count +=  right.TreeCount;
+                }
+                else if (right.Intersects(range))
+                {
+
+                    //Console.WriteLine("rightInter");
+                    count += (right.Count(range));
+                }
+            }
+            return count;
         }
 
         //        . if ν is a leaf

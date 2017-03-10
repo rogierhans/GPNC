@@ -65,16 +65,17 @@ namespace GPNC
             //string Fragmented = "FG";
             //string Solution = "SG";
             bool RemoveCore = false;
+           // Graph G = IOGraph.GetFilteredGraph(map);
             Graph OG = IOGraph.GetOriginalGraph(map);
             var nodes = Parser.ParseNodes(OG, map);
             KDTree tree = new KDTree(nodes.Values.ToList(),0);
-            int distance = 500;
+            int distance = 500000;
             Dictionary<int, int> scores = new Dictionary<int, int>();
             foreach (int id in OG.nodes)
             {
                 GeoPoint gp = nodes[id];
                 Range range = new Range(new GeoPoint(gp.X - distance, gp.Y - distance), distance * 2, distance * 2);
-                int score = tree.GetRange(range).Count;
+                int score = tree.Count(range);
                 scores[id] = score;
             }
             scores.OrderBy(x => x.Value);
