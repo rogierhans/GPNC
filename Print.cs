@@ -12,8 +12,10 @@ namespace GPNC
 {
     static class Print
     {
-        public static readonly string location = "F:\\Users\\Rogier\\Desktop\\Pictures\\";
-        public static void makePrints(Graph G, Graph OG, Dictionary<int,GeoPoint> nodes,string filename) {
+        //public static readonly string location = "F:\\Users\\Rogier\\Desktop\\Pictures\\";
+        public static readonly string location = "C:\\Users\\Roosje\\OneDrive\\Roos\\Downloads\\";
+        public static void makePrints(Graph G, Graph OG, Dictionary<int, GeoPoint> nodes, string filename)
+        {
             var realPS = Uncontract.GetPartitions(G, OG);
             List<Edge> realEdges = new List<Edge>();
             foreach (Edge e in G.GetAllArcs())
@@ -32,7 +34,37 @@ namespace GPNC
                 }
             }
 
-            PrintCutsOnGraph(nodes,OG,G, realEdges, filename);
+            PrintCutsOnGraph(nodes, OG, G, realEdges, filename);
+        }
+
+
+        public static Color heatColor(int low, int high, int current)
+        {
+            int max = 255;
+            int colorInt = (int)(max * ((double)(current - low) / (high - low)));
+            return Color.FromArgb(colorInt, 0, max - colorInt);
+        }
+
+        public static void PrintHeatMap(Graph OG, Dictionary<int, GeoPoint> nodes, Dictionary<int, int> neighbourCount)
+        {
+            int size = 20000;
+            var bmp = new Bitmap(size, size);
+            var gr = Graphics.FromImage(bmp);
+            int minCount = neighbourCount.Values.Min(x => x);
+            int maxCount = neighbourCount.Values.Max(x => x);
+
+            int maxLati = OG.nodes.Max(x => nodes[x].Y);
+            int minLati = OG.nodes.Min(x => nodes[x].Y);
+            int maxLongi = OG.nodes.Max(x => nodes[x].X);
+            int minLongi = OG.nodes.Min(x => nodes[x].X);
+            foreach (int id in OG.nodes)
+            {
+                GeoPoint gp = nodes[id];
+                Color c = heatColor(minCount, maxCount, neighbourCount[id]);
+                gr.DrawRectangle(new Pen(c,20), calcX(gp, minLongi, maxLongi, size), calcY(gp, minLati, maxLati, size),1,1);
+            }
+            var path = location + "heatmap.bmp";
+            bmp.Save(path);
         }
 
         public static Color randomColor(Random r)
@@ -61,7 +93,8 @@ namespace GPNC
             return result;
         }
 
-        public static Brush randomBrush2(Random r) {
+        public static Brush randomBrush2(Random r)
+        {
             Brush result = Brushes.Transparent;
 
 
@@ -74,7 +107,7 @@ namespace GPNC
             return result;
         }
 
-        public static int calcX(GeoPoint p, int minLongi, int maxLongi,int size)
+        public static int calcX(GeoPoint p, int minLongi, int maxLongi, int size)
         {
             int mx = maxLongi - minLongi;
             int hx = p.X - minLongi;
@@ -88,7 +121,7 @@ namespace GPNC
 
         }
 
-        public static void PrintCutsOnGraph(Dictionary<int, GeoPoint> nodes, Graph OG,Graph G, List<Edge> cuts, String filename)
+        public static void PrintCutsOnGraph(Dictionary<int, GeoPoint> nodes, Graph OG, Graph G, List<Edge> cuts, String filename)
         {
             int size = 20000;
             var bmp = new Bitmap(size, size);
@@ -127,16 +160,16 @@ namespace GPNC
                 GeoPoint np2 = nodes[w];
                 gr.DrawEllipse(new Pen(Color.Blue, 15), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
                 gr.DrawEllipse(new Pen(Color.Blue, 15), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
-                gr.DrawLine(new Pen(Color.Blue,9), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
+                gr.DrawLine(new Pen(Color.Blue, 9), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
             }
             RectangleF rectf = new RectangleF(size - 100 * (size / 1000), size - 100 * (size / 1000), size, size);
             gr.DrawString(cuts.Count.ToString(), new Font("Tahoma", 8 * (size / 1000)), Brushes.White, rectf);
             var path = location +
-                filename + cuts.Count.ToString() +".bmp";
+                filename + cuts.Count.ToString() + ".bmp";
             bmp.Save(path);
 
         }
-        public static void PrintCutFound(Dictionary<int, GeoPoint> nodes,Graph G, List<int> subGraph, List<int> partition, HashSet<int> par, List<int> core, String filename)
+        public static void PrintCutFound(Dictionary<int, GeoPoint> nodes, Graph G, List<int> subGraph, List<int> partition, HashSet<int> par, List<int> core, String filename)
         {
             int size = 2000;
             var bmp = new Bitmap(size, size);
@@ -146,8 +179,10 @@ namespace GPNC
             int minLati = G.nodes.Min(x => nodes[x].Y);
             int maxLongi = G.nodes.Max(x => nodes[x].X);
             int minLongi = G.nodes.Min(x => nodes[x].X);
-            foreach (Edge e in G.GetAllArcs()) {
-                if ((par.Contains(e.To) && !par.Contains(e.From)) || (!par.Contains(e.To) && par.Contains(e.From))) {
+            foreach (Edge e in G.GetAllArcs())
+            {
+                if ((par.Contains(e.To) && !par.Contains(e.From)) || (!par.Contains(e.To) && par.Contains(e.From)))
+                {
                     GeoPoint np1 = nodes[e.To];
                     GeoPoint np2 = nodes[e.From];
                     gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
@@ -178,7 +213,8 @@ namespace GPNC
 
         }
 
-        public static void DrawChagedMap(Graph OG ,Graph G, Dictionary<int, GeoPoint> nodes,string name) {
+        public static void DrawChagedMap(Graph OG, Graph G, Dictionary<int, GeoPoint> nodes, string name)
+        {
             int size = 20000;
             var bmp = new Bitmap(size, size);
             var gr = Graphics.FromImage(bmp);
@@ -200,15 +236,15 @@ namespace GPNC
             foreach (Edge e in G.GetAllArcs())
             {
 
-                    GeoPoint np1 = nodes[e.To];
-                    GeoPoint np2 = nodes[e.From];
-                    gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
-                    gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
-                    gr.DrawLine(new Pen(Color.Blue, 3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
+                GeoPoint np1 = nodes[e.To];
+                GeoPoint np2 = nodes[e.From];
+                gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 3, 3);
+                gr.DrawEllipse(new Pen(Color.Blue, 5), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size), 3, 3);
+                gr.DrawLine(new Pen(Color.Blue, 3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
 
             }
 
-            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\FliterMap"+name+".png";
+            var path = "F:\\Users\\Rogier\\Desktop\\ROOS\\FliterMap" + name + ".png";
             bmp.Save(path);
         }
         public static void DrawMap(Graph G, Dictionary<int, int> dict, Dictionary<int, GeoPoint> nodes, string name)
@@ -232,7 +268,8 @@ namespace GPNC
                 gr.DrawLine(new Pen(Color.Blue, 3), calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), calcX(np2, minLongi, maxLongi, size), calcY(np2, minLati, maxLati, size));
 
             }
-            foreach(var kvp in dict) {
+            foreach (var kvp in dict)
+            {
                 GeoPoint np1 = nodes[kvp.Key];
                 RectangleF rectf = new RectangleF(calcX(np1, minLongi, maxLongi, size), calcY(np1, minLati, maxLati, size), 100, 100);
                 gr.DrawString(kvp.Value.ToString(), new Font("Tahoma", 16), Brushes.White, rectf);

@@ -69,7 +69,7 @@ namespace GPNC
             Graph OG = IOGraph.GetOriginalGraph(map);
             var nodes = Parser.ParseNodes(OG, map);
             KDTree tree = new KDTree(nodes.Values.ToList(),0);
-            int distance = 500000;
+            int distance = 50000;
             Dictionary<int, int> scores = new Dictionary<int, int>();
             foreach (int id in OG.nodes)
             {
@@ -83,6 +83,8 @@ namespace GPNC
             var kvpl = scores.Last();
             Console.WriteLine($"{kvp.Key} met {kvp.Value}");
             Console.WriteLine($"{kvpl.Key} met {kvpl.Value}");
+            Print.PrintHeatMap(OG, nodes, scores);
+
             Console.ReadLine();
             return;
             //Graph G = IOGraph.GetFilteredGraph(map);
