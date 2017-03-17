@@ -29,7 +29,8 @@ namespace GPNC
             Console.WriteLine("NC:{0} with {1}", G.nodes.Count, MinSize);
             if (G.nodes.Count > MinSize)
             {
-                HashSet<Edge> cuts = NaturalCut.MakeCuts(null,G, U, alpha, f,false);
+                NaturalCut NC = new NaturalCut(G, U, alpha, f, false);
+                HashSet<Edge> cuts = NC.MakeCuts(null);
                 List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
                 ps.ForEach(x => G.ContractList(x));
                 Graph FG = G.CreateSubGraph(G.nodes.ToList());

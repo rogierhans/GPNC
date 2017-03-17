@@ -19,9 +19,16 @@ namespace GPNC
 
         private GeoPoint min;
         private GeoPoint max;
+
+        private int XUnit;
+        private int YUnit;
         private int TreeCount;
-        public KDTree(List<GeoPoint> points, int depth)
+        public KDTree(List<GeoPoint> points, int xUnit, int yUnit) : this(points,0, xUnit, yUnit) { }
+
+        public KDTree(List<GeoPoint> points, int depth, int xUnit, int yUnit)
         {
+            XUnit = xUnit;
+            YUnit = yUnit;
             TreeCount = points.Count;
             evenDepth = isEven(depth);
             if (points.Count == 1)
@@ -30,13 +37,18 @@ namespace GPNC
             }
             else
             {
+                //sort on x or y coordinate
                 points = points.OrderBy(x => isEven(depth) ? x.X : x.Y).ToList();
+
+                //devide on median
                 int median = points.Count / 2;
                 Point = points[median];
+
+                //
                 List<GeoPoint> leftPoints = points.Take(median).ToList();
                 List<GeoPoint> rightPoints = points.Skip(median).ToList();
-                if (leftPoints.Count > 0) left = new KDTree(leftPoints, depth + 1);
-                if (rightPoints.Count > 0) right = new KDTree(rightPoints, depth + 1);
+                if (leftPoints.Count > 0) left = new KDTree(leftPoints, depth + 1, xUnit,yUnit);
+                if (rightPoints.Count > 0) right = new KDTree(rightPoints, depth + 1, xUnit, yUnit);
                 min = new GeoPoint(points.Min(gp => gp.X), points.Min(gp => gp.Y));
                 max = new GeoPoint(points.Max(gp => gp.X), points.Max(gp => gp.Y));
             }
@@ -102,6 +114,13 @@ namespace GPNC
             }
             return allPoints;
         }
+        public int CountUnits(GeoPoint gp,int units) {
+            int xUnits = XUnit * units;
+            int yUnits = YUnit * units;
+            GeoPoint startPoint = new GeoPoint(gp.X - xUnits, gp.Y - yUnits);
+            Range r = new Range(startPoint,xUnits,yUnits);
+            return Count(r);
+        }
 
         public int Count(Range range)
         {
@@ -124,7 +143,7 @@ namespace GPNC
                 if (right.IsFullyContained(range))
                 {
                     //Console.WriteLine("yolo");
-                    count +=  right.TreeCount;
+                    count += right.TreeCount;
                 }
                 else if (right.Intersects(range))
                 {
@@ -136,16 +155,6 @@ namespace GPNC
             return count;
         }
 
-        //        . if ν is a leaf
-        //2. then Report the point stored at ν if it lies in R
-        //3. else if region(lc(ν)) is fully contained in R
-        //4.      then ReportSubtree(lc(ν))
-        //5.      else if region(lc(ν)) intersects R
-        //6.      then SearchKdTree(lc(ν),R)
-        //7. if region(rc(ν)) is fully contained in R
-        //8. then ReportSubtree(rc(ν))
-        //9. else if region(rc(ν)) intersects R
-        //10. then SearchKdTree(rc(ν),R)
 
         public List<GeoPoint> ReportPoints()
         {
@@ -186,17 +195,6 @@ namespace GPNC
             }
         }
 
-        private bool inLeftChild(Range range)
-        {
-            if (evenDepth)
-            {
-                return range.Low.X <= Point.X && range.High.X <= Point.X;
-            }
-            else
-            {
-                return range.Low.Y <= Point.Y && range.High.Y <= Point.Y;
-            }
-        }
 
         private bool isLeaf()
         {

@@ -55,16 +55,57 @@ namespace GPNC
             // //Console.ReadLine();
             // //return;
             double alpha = 1;
-            //int U = 250000;
-            string map = "DU";
-            //double f = 10;
+            int U = 100000;
+            string map = "NL";
+            double f = 20;
             //string Fragmented = "FG";
             //string Solution = "SG";
             bool RemoveCore = false;
             //// Graph G = IOGraph.GetFilteredGraph(map);
-            // Graph OG = IOGraph.GetOriginalGraph(map);
-            // var nodes = Parser.ParseNodes(OG, map);
-            // KDTree tree = new KDTree(nodes.Values.ToList(),0);
+            //Graph OG = IOGraph.GetOriginalGraph(map);
+
+
+            Graph OG = IOGraph.GetOriginalGraph(map);
+            var nodes = Parser.ParseNodes(OG, map);
+            //int minx = nodes.Values.Min(gp => gp.X);
+            //int miny = nodes.Values.Min(gp => gp.Y);
+            //int maxx = nodes.Values.Max(gp => gp.X);
+            //int maxy = nodes.Values.Max(gp => gp.Y);
+            //int XUnits = (maxx - minx) / 200;
+            //int YUnits = (maxy - miny) / 200;
+            //KDTree tree = new KDTree(nodes.Values.ToList(),XUnits,YUnits);
+            //Dictionary<int, int> scores = new Dictionary<int, int>();
+            //foreach (int id in OG.nodes)
+            //{
+            //    GeoPoint gp = nodes[id];
+            //    int score = tree.CountUnits(gp,1);
+            //    scores[id] = score;
+            //}
+            //var orded = from pair in scores
+            //         orderby pair.Value descending
+            //         select pair.Key;
+            //List<int> OrdedNodes = orded.ToList();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
+            //make cuts and get the fragments
+
+            // report the time
+
+
+            Graph G = IOGraph.GetFilteredGraph(map);
+            NaturalCut NC = new NaturalCut(G, U, alpha, f, RemoveCore);
+            HashSet<Edge> cuts = NC.MakeCuts(null);
+            List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
+            ps.ForEach(x => { int v = G.ContractList(x); });
+            Graph FG = G.CreateSubGraph(G.nodes.ToList());
+            G.ApplyGreedyAlgorithm(U);
+            G = LocalSearch.Search1(G, FG, U);
+            watch.Stop();
+            Console.WriteLine(watch.ElapsedMilliseconds);
+            Console.ReadLine();
+            //Print.makePrints(G, OG, nodes, U / 1000 + "f" + f + map + (RemoveCore ? "T" : "F"));
+
+            //Print.PrintHeatMap(OG,nodes,scores);
             // int distance = 100000;
             // Dictionary<int, int> scores = new Dictionary<int, int>();
             // foreach (int id in OG.nodes)
@@ -97,25 +138,25 @@ namespace GPNC
             //Print.makePrints(G, OG, nodes, U / 1000 + "f" + f + map + (RemoveCore ? "T" : "F"));
 
 
-            //Find natural cuts and contract them
-            foreach (int U in new int[] { 250000, 1000000 })
+            ////Find natural cuts and contract them
+            //foreach (int U in new int[] { 250000, 1000000 })
+            ////{
+            ////    for (double f = 10; f <= 100; f = f + 10)
+            ////    {
+            ////        Report report = new Report(map, 10, U, alpha, f, RemoveCore);
+            ////        report.WriteLogToFile();
+            ////    }
+            ////}
+            //RemoveCore = true;
+            ////Find natural cuts and contract them
+            //foreach (int U in new int[] { 250000, 1000000 })
             //{
-            //    for (double f = 10; f <= 100; f = f + 10)
+            //    for (double f = 5; f <= 25; f = f + 5)
             //    {
             //        Report report = new Report(map, 10, U, alpha, f, RemoveCore);
             //        report.WriteLogToFile();
             //    }
             //}
-            RemoveCore = true;
-            //Find natural cuts and contract them
-            foreach (int U in new int[] { 250000, 1000000 })
-            {
-                for (double f = 5; f <= 25; f = f + 5)
-                {
-                    Report report = new Report(map, 10, U, alpha, f, RemoveCore);
-                    report.WriteLogToFile();
-                }
-            }
             //for (int i = 0; i < 10; i++)
             //{
             //    Graph G = GetFilteredGraph(map);
@@ -229,7 +270,8 @@ namespace GPNC
                 var watch = System.Diagnostics.Stopwatch.StartNew();
 
                 //make cuts and get the fragments
-                HashSet<Edge> cuts = NaturalCut.MakeCuts(null, G, U, Alpha, F, RemoveCore);
+                NaturalCut NC = new NaturalCut(G,U,Alpha,F,RemoveCore);
+                HashSet<Edge> cuts = NC.MakeCuts(null);
                 List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
                 ps.ForEach(x => { int v = G.ContractList(x); });
 
@@ -416,7 +458,7 @@ namespace GPNC
             partitionToBoundaryNodes.Values.ToList().ForEach(x => BoundaryNodes += x.Count);
 
             CQMMeasure = -1;
-                //(int)QualityNode(G, OG, partitions);
+            //(int)QualityNode(G, OG, partitions);
         }
         public double QualityNode(Graph G, Graph OG, Dictionary<int, HashSet<int>> partitions)
         {

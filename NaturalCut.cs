@@ -13,9 +13,39 @@ using System.Threading;
 
 namespace GPNC
 {
-    static class NaturalCut
+    class NaturalCut
     {
-        public static HashSet<Edge> MakeCuts(Dictionary<int, GeoPoint> nodes, Graph G, int U, double alpha, double f, bool removeCore)
+        Graph G;
+        int U;
+        double Alpha;
+        double F;
+        bool RemoveCore;
+        List<int> OrdedNodes;
+        public NaturalCut(Graph g, int u, double alpha, double f, bool removeCore)
+        {
+            G = g;
+            U = u;
+            Alpha = alpha;
+            F = f;
+            RemoveCore = removeCore;
+        }
+        public NaturalCut(Graph g, int u, double alpha, double f, bool removeCore, List<int> ordedNodes)
+        {
+            G = g;
+            U = u;
+            Alpha = alpha;
+            F = f;
+            RemoveCore = removeCore;
+            OrdedNodes = ordedNodes;
+        }
+
+
+        private BFS bfs;
+        private List<Edge> cut;
+        private List<int> result;
+        private int s;
+        private int t;
+        public HashSet<Edge> MakeCuts(Dictionary<int, GeoPoint> nodes)
         {
             HashSet<int> allNodes = new HashSet<int>();
             foreach (int id in G.nodes)
@@ -27,88 +57,83 @@ namespace GPNC
             Random rnd = new Random();
             while (allNodes.Count > 0)
             {
-
-                Thread[] threads = new Thread[8];
-                Tuple<List<int>, List<Edge>>[] partitionAndCuts = new Tuple<List<int>, List<Edge>>[8];
-                for (int i = 0; i < 8; i++)
+                int startNodeForBFS;
+                if (OrdedNodes == null)
                 {
-                    int index = i;
-                    Console.WriteLine(i);
-                    if (allNodes.Count > 0)
-                    {
-                        int rID = RandomID(allNodes, rnd);
-                        BFS bfs = new BFS(G, U, alpha, f, rID);
-                        bfs.Core.ForEach(x => allNodes.Remove(x));
-                        threads[i] = new Thread(() =>
-                        {
-                            partitionAndCuts[index] = GetPartitionAndCut(G, bfs);
-                        });
-                        threads[i].Start();
-                    }
-                    else
-                    {
-                        threads[i] = new Thread(() => { });
-                        threads[i].Start();
-                    }
-
+                    startNodeForBFS = RandomID(allNodes, rnd);
+                }
+                else {
+                    startNodeForBFS = GetMostDenseNode(allNodes);
                 }
 
-                for (int i = 0; i < threads.Length; i++)
+
+                bfs = new BFS(G, U, Alpha, F, startNodeForBFS);
+                SolveOnGraph();
+                bfs.Core.ForEach(y => allNodes.Remove(y));
+                if (!RemoveCore)
                 {
-                    threads[i].Join();
-                }
-                if (!removeCore)
-                {
-                    partitionAndCuts.ToList().ForEach(
-                     x =>
-                     {
-                         if (x != null)
-                             x.Item1.ForEach(y => allNodes.Remove(y));
-                     });
+                    result.ForEach(y => allNodes.Remove(y));
                 }
 
-                partitionAndCuts.ToList().ForEach(x =>
-                {
-                    if (x != null)
-                        x.Item2.ForEach(y => allCuts.Add(y));
-                });
-
-
-                //remove latr
+                cut.ForEach(y => allCuts.Add(y));
                 //HashSet<int> parpar = new HashSet<int>();
                 //partitionAndCut.Item1.ForEach(e => parpar.Add(e));
                 //Print.PrintCutFound(nodes, G.CreateSubGraphWithoutParent(bfs.SubGraph), bfs.SubGraph, partitionAndCut.Item1, parpar, bfs.Core, allNodes.Count.ToString());
-                Console.WriteLine(allNodes.Count + "left");
+                //Console.WriteLine(allNodes.Count + "left");
             }
 
             return allCuts;
         }
 
-        private static int RandomID(HashSet<int> allNodes, Random rnd)
+        private int index = 0;
+        private int GetMostDenseNode(HashSet<int> allNodes) {
+            int rID = -1;
+            while (rID == -1)
+            {
+                if (allNodes.Contains(OrdedNodes[index]))
+                {
+                    rID = OrdedNodes[index];
+                }
+                else
+                {
+                    index++;
+                }
+            }
+            return rID;
+        }
+
+        private int RandomID(HashSet<int> allNodes, Random rnd)
         {
 
             return allNodes.ToList()[rnd.Next(allNodes.Count)];
         }
 
-        static public Tuple<List<int>, List<Edge>> GetPartitionAndCut(Graph OriginalG, BFS bfs)
+
+        private void SolveOnGraph()
         {
-            Graph SubGraph = OriginalG.CreateSubGraphWithoutParent(bfs.SubGraph);
+            Graph SubGraph = G.CreateSubGraphWithoutParent(bfs.SubGraph);
             SubGraph.ContractList(bfs.Core);
             SubGraph.ContractList(bfs.Ring);
-            Tuple<List<int>, List<Edge>> result = SolveOnGraph(OriginalG, SubGraph, bfs);
-            return new Tuple<List<int>, List<Edge>>(bfs.Core.Union(result.Item1).ToList(), result.Item2);
-        }
 
-        static private Tuple<List<int>, List<Edge>> SolveOnGraph(Graph OriginalG, Graph SubGraph, BFS bfs)
-        {
-            List<Edge> cut = new List<Edge>();
-            Dictionary<int, Dictionary<int, int>> arcToIndex = new Dictionary<int, Dictionary<int, int>>();
-            int index = 0;
+
+
             MaxFlow maxFlow = new MaxFlow();
 
-            int s = bfs.Core.First();
-            int t = bfs.Ring.First();
+
+            s = bfs.Core.First();
+            t = bfs.Ring.First();
             //add arcs to Google OrTools
+            var arcToIndex = AddArcsToMaxFlow(SubGraph, maxFlow);
+            int solveStatus = maxFlow.Solve(s, t);
+
+            ExtractCutAndPartition(SubGraph, maxFlow, arcToIndex);
+        }
+
+
+        private Dictionary<int, Dictionary<int, int>> AddArcsToMaxFlow(Graph SubGraph, MaxFlow maxFlow)
+        {
+            int index = 0;
+            Dictionary<int, Dictionary<int, int>> arcToIndex = new Dictionary<int, Dictionary<int, int>>();
             foreach (int n in SubGraph.nodes)
             {
                 var tuple = SubGraph.GetNeighboursFast(n);
@@ -133,11 +158,16 @@ namespace GPNC
                     index++;
                 }
             }
-            int solveStatus = maxFlow.Solve(s, t);
+            return arcToIndex;
+        }
+
+
+        private void ExtractCutAndPartition(Graph SubGraph, MaxFlow maxFlow, Dictionary<int, Dictionary<int, int>> arcToIndex)
+        {
             Queue<int> queue = new Queue<int>();
             HashSet<int> visited = new HashSet<int>();
-
-            List<int> result = new List<int>();
+            cut = new List<Edge>();
+            result = new List<int>();
             queue.Enqueue(s);
             visited.Add(s);
             result.Add(s);
@@ -169,7 +199,7 @@ namespace GPNC
                         }
                         else
                         {
-                            AddCut(id, fn, OriginalG, SubGraph, bfs, hashCore, cut);
+                            AddCut(id, fn, hashCore);
                         }
                     }
                 }
@@ -177,25 +207,16 @@ namespace GPNC
 
             }
 
-            return new Tuple<List<int>, List<Edge>>(result, cut);
         }
 
-        static private List<Edge> AddCut(int id, int fn, Graph OriginalG, Graph G, BFS bfs, HashSet<int> hashCore, List<Edge> cut)
+        private void AddCut(int id, int fn, HashSet<int> hashCore)
         {
             int s = bfs.Core.First();
             int t = bfs.Ring.First();
 
             if (id == s)
             {
-                //foreach (int coreElement in bfs.Core)
-                //{
-                //    if (OriginalG.IsEdge(coreElement, fn))
-                //    {
-                //        Edge e = new Edge(coreElement, fn);
-                //        cut.Add(e);
-                //    }
-                //}
-                foreach (int potentialNeighbour in OriginalG.GetNeighbours(fn))
+                foreach (int potentialNeighbour in G.GetNeighbours(fn))
                 {
                     if (hashCore.Contains(potentialNeighbour))
                     {
@@ -209,7 +230,7 @@ namespace GPNC
             {
                 foreach (int ringElement in bfs.Ring)
                 {
-                    if (OriginalG.IsEdge(ringElement, fn))
+                    if (G.IsEdge(ringElement, fn))
                     {
                         Edge e = new Edge(ringElement, fn);
                         cut.Add(e);
@@ -221,7 +242,6 @@ namespace GPNC
                 Edge e = new Edge(id, fn);
                 cut.Add(e);
             }
-            return cut;
         }
     }
 
