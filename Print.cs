@@ -12,8 +12,8 @@ namespace GPNC
 {
     static class Print
     {
-        //public static readonly string location = "F:\\Users\\Rogier\\Desktop\\Pictures\\";
-        public static readonly string location = "C:\\Users\\Roosje\\OneDrive\\Roos\\Downloads\\";
+        public static readonly string location = "F:\\Users\\Rogier\\Desktop\\Pictures\\";
+        //public static readonly string location = "C:\\Users\\Roosje\\OneDrive\\Roos\\Downloads\\";
         public static void makePrints(Graph G, Graph OG, Dictionary<int, GeoPoint> nodes, string filename)
         {
             var realPS = Uncontract.GetPartitions(G, OG);

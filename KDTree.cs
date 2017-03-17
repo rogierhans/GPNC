@@ -244,9 +244,9 @@ namespace GPNC
         }
         public void makePicture(Range realRange)
         {
-            var location = "C:\\Users\\Roosje\\Desktop\\SAVE\\";
+            var location = "F:\\Users\\Rogier\\Desktop\\Pictures\\";
 
-            int size = 2000;
+            int size = 20000;
             var bmp = new Bitmap(size, size);
             var gr = Graphics.FromImage(bmp);
             var ranges = GetAllRange();

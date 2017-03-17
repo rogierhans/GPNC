@@ -65,6 +65,14 @@ namespace GPNC
             File.WriteAllLines(path, AllParents.ToArray());
 
         }
+
+        internal static void MakeMap(string map, int countryNumber)
+        {
+            string Unfiltered = "UF";
+            Graph G = Parser.ParseCSVFileWithNumber(countryNumber);
+            IOGraph.WriteGraph(G, map + Unfiltered);
+        }
+
         public static Graph ReadGraph(string filename) {
             var pathNodes = location + filename + "nodes.csv";
             var pathArcs = location + filename + "arcs.csv";

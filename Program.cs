@@ -49,44 +49,42 @@ namespace GPNC
             ////testTree.makePicture(specific);
             ////testTree.GetAllRange().ForEach(x => Console.WriteLine(x));
 
+            //IOGraph.MakeMap("DU", 6);
 
 
-
-
-
-
-
-            //Console.ReadLine();
-            //return;
+            // //Console.ReadLine();
+            // //return;
             double alpha = 1;
-            int U = 250000;
-            string map = "NL";
-            double f = 20;
+            //int U = 250000;
+            string map = "DU";
+            //double f = 10;
             //string Fragmented = "FG";
             //string Solution = "SG";
             bool RemoveCore = false;
-           // Graph G = IOGraph.GetFilteredGraph(map);
-            Graph OG = IOGraph.GetOriginalGraph(map);
-            var nodes = Parser.ParseNodes(OG, map);
-            KDTree tree = new KDTree(nodes.Values.ToList(),0);
-            int distance = 50000;
-            Dictionary<int, int> scores = new Dictionary<int, int>();
-            foreach (int id in OG.nodes)
-            {
-                GeoPoint gp = nodes[id];
-                Range range = new Range(new GeoPoint(gp.X - distance, gp.Y - distance), distance * 2, distance * 2);
-                int score = tree.Count(range);
-                scores[id] = score;
-            }
-            scores.OrderBy(x => x.Value);
-            var kvp = scores.First();
-            var kvpl = scores.Last();
-            Console.WriteLine($"{kvp.Key} met {kvp.Value}");
-            Console.WriteLine($"{kvpl.Key} met {kvpl.Value}");
-            Print.PrintHeatMap(OG, nodes, scores);
+            //// Graph G = IOGraph.GetFilteredGraph(map);
+            // Graph OG = IOGraph.GetOriginalGraph(map);
+            // var nodes = Parser.ParseNodes(OG, map);
+            // KDTree tree = new KDTree(nodes.Values.ToList(),0);
+            // int distance = 100000;
+            // Dictionary<int, int> scores = new Dictionary<int, int>();
+            // foreach (int id in OG.nodes)
+            // {
+            //     GeoPoint gp = nodes[id];
+            //     Range range = new Range(new GeoPoint(gp.X - distance, gp.Y - distance), distance * 2, distance * 2);
+            //     int score = tree.Count(range);
+            //     scores[id] = score;
+            // }
 
-            Console.ReadLine();
-            return;
+            // tree.makePicture(new Range(new GeoPoint(nodes[OG.nodes.ToList()[10000]].X - distance, nodes[OG.nodes.ToList()[10000]].Y - distance), distance * 2, distance * 2));
+            // scores.OrderBy(x => x.Value);
+            // var kvp = scores.First();
+            // var kvpl = scores.Last();
+            // Console.WriteLine($"{kvp.Key} met {kvp.Value}");
+            // Console.WriteLine($"{kvpl.Key} met {kvpl.Value}");
+            // Print.PrintHeatMap(OG, nodes, scores);
+
+            // Console.ReadLine();
+            // return;
             //Graph G = IOGraph.GetFilteredGraph(map);
             //HashSet<Edge> cuts = NaturalCut.MakeCuts(null, G, U, alpha, f, RemoveCore);
             //List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
@@ -95,29 +93,29 @@ namespace GPNC
             //G.ApplyGreedyAlgorithm(U);
             //G = LocalSearch.Search1(G, FG, U);
             //Graph OG = IOGraph.GetOriginalGraph(map);
-            //var nodes = Parser.ParseNodes(OG, map);
+            //var nodes = Parser.ParseNodes(OG, "EA");
             //Print.makePrints(G, OG, nodes, U / 1000 + "f" + f + map + (RemoveCore ? "T" : "F"));
 
 
-            ////Find natural cuts and contract them
-            //foreach (int U in new int[] {100000, 250000 })
+            //Find natural cuts and contract them
+            foreach (int U in new int[] { 250000, 1000000 })
             //{
-            //    for (double f = 10; f <= 100; f = f + 5)
+            //    for (double f = 10; f <= 100; f = f + 10)
             //    {
-            //        Report report = new Report(map, 25, U, alpha, f, RemoveCore);
+            //        Report report = new Report(map, 10, U, alpha, f, RemoveCore);
             //        report.WriteLogToFile();
             //    }
             //}
-            //RemoveCore = true;
-            ////Find natural cuts and contract them
-            //foreach (int U in new int[] {100000, 250000 })
-            //{
-            //    for (double f = 5; f <= 25; f = f + 5)
-            //    {
-            //        Report report = new Report(map, 25, U, alpha, f, RemoveCore);
-            //        report.WriteLogToFile();
-            //    }
-            //}
+            RemoveCore = true;
+            //Find natural cuts and contract them
+            foreach (int U in new int[] { 250000, 1000000 })
+            {
+                for (double f = 5; f <= 25; f = f + 5)
+                {
+                    Report report = new Report(map, 10, U, alpha, f, RemoveCore);
+                    report.WriteLogToFile();
+                }
+            }
             //for (int i = 0; i < 10; i++)
             //{
             //    Graph G = GetFilteredGraph(map);
