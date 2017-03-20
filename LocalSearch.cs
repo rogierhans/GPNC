@@ -13,25 +13,22 @@ namespace GPNC
 
             Graph BestGraph = G;
             int BestWeight = int.MaxValue;
-            int runs = 10000;
+            int runs = 100000;
             Dictionary<int, HashSet<int>> partitions;
-            Random rnd = new Random();
-            int index = 0;
-            int round = 5;
-            while (runs > 0)
+            Random rng = new Random();
+
+            EdgeSelecter edgeSelecter = new EdgeSelecter(G.GetAllArcs(), rng);
+            while (edgeSelecter.NotEmpty() && runs > 0)
             {
 
-                //G.print();
-                Console.WriteLine(G.nodes.Count);
                 int weight = 0;
                 G.GetAllArcs().ForEach(x => weight += G.getWeight(x.To, x.From));
                 Console.WriteLine("Weight:{0}", weight);
-
-                if (calcAccept(weight, BestWeight, runs, rnd))
+                if (calcAccept(weight, BestWeight, runs, rng))
                 {
                     BestGraph = G.CreateSubGraph(G.nodes.ToList());
                     BestWeight = weight;
-                    index = 0;
+                    edgeSelecter = new EdgeSelecter(G.GetAllArcs(), rng);
                 }
 
                 //Get the partitions
@@ -39,30 +36,58 @@ namespace GPNC
 
                 G = FG.CreateSubGraphWithoutParent(FG.nodes.ToList());
 
-                List<Edge> edges = BestGraph.GetAllArcs();
-                if (index >= edges.Count)
-                {
-                    if (round <= 0)
-                        break;
-                    else
-                    {
-                        round--;
-                        index = 0;
-                    }
-                }
-                //Edge e = edges[rnd.Next(edges.Count)];
-                Edge e = edges.OrderBy(x => BestGraph.getWeight(x.To, x.From)).ToList()[(edges.Count - 1) - index];
+                Edge e = edgeSelecter.NextEdge();
                 ContractOnGraph(G, partitions, e);
 
                 //apply greedy algorithm
                 G.ApplyGreedyAlgorithm(U);
-                runs--; index++;
+                runs--;
             }
-            foreach (var kvp in FG.Parent) {
+
+            //fix Parent optimazation
+            foreach (var kvp in FG.Parent)
+            {
                 BestGraph.Parent[kvp.Key] = kvp.Value;
             }
             return BestGraph;
         }
+
+        private class EdgeSelecter
+        {
+            private List<Edge> possibleEdges;
+            private Dictionary<Edge, int> phiScores;
+            private int maxPhi = 16;
+            Random rng;
+            public EdgeSelecter(List<Edge> edges, Random rng)
+            {
+                possibleEdges = edges;
+                phiScores = new Dictionary<Edge, int>();
+                edges.ForEach(e => { phiScores[e] = 0; });
+                this.rng = rng;
+            }
+            public Edge NextEdge()
+            {
+
+                Edge e = possibleEdges[rng.Next(possibleEdges.Count)];
+                phiScores[e] += 1;
+
+                if (phiScores[e] >= maxPhi)
+                {
+                    possibleEdges.Remove(e);
+                }
+                return e;
+            }
+
+            public bool NotEmpty()
+            {
+                return (possibleEdges.Count > 0);
+            }
+
+        }
+
+
+
+
         private static void ContractOnGraph(Graph G, Dictionary<int, HashSet<int>> partitions, Edge e)
         {
             foreach (var kvp in partitions)
@@ -82,13 +107,6 @@ namespace GPNC
                 return true;
             else
             {
-                //double c = runs / 10.0;
-                //double score = bestWeight - weight;
-                //double p = Math.Pow(Math.E, score/c);
-                //Console.WriteLine(p);
-                //bool boo= (p > r.NextDouble());
-                //Console.WriteLine(boo);
-                //return boo;
                 return false;
             }
         }

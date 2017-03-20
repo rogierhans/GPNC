@@ -29,10 +29,7 @@ namespace GPNC
             Console.WriteLine("NC:{0} with {1}", G.nodes.Count, MinSize);
             if (G.nodes.Count > MinSize)
             {
-                NaturalCut NC = new NaturalCut(G, U, alpha, f, false);
-                HashSet<Edge> cuts = NC.MakeCuts(null);
-                List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
-                ps.ForEach(x => G.ContractList(x));
+                G = FindFragments.GetFragmentedGraph(G, U, alpha, f, false,null);
                 Graph FG = G.CreateSubGraph(G.nodes.ToList());
                 Console.WriteLine(G.nodes.Count);
                 G.ApplyGreedyAlgorithm(U);

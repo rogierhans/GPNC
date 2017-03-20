@@ -20,15 +20,11 @@ namespace GPNC
         private GeoPoint min;
         private GeoPoint max;
 
-        private int XUnit;
-        private int YUnit;
         private int TreeCount;
-        public KDTree(List<GeoPoint> points, int xUnit, int yUnit) : this(points,0, xUnit, yUnit) { }
+        public KDTree(List<GeoPoint> points) : this(points, 0) { }
 
-        public KDTree(List<GeoPoint> points, int depth, int xUnit, int yUnit)
+        public KDTree(List<GeoPoint> points, int depth)
         {
-            XUnit = xUnit;
-            YUnit = yUnit;
             TreeCount = points.Count;
             evenDepth = isEven(depth);
             if (points.Count == 1)
@@ -47,8 +43,8 @@ namespace GPNC
                 //
                 List<GeoPoint> leftPoints = points.Take(median).ToList();
                 List<GeoPoint> rightPoints = points.Skip(median).ToList();
-                if (leftPoints.Count > 0) left = new KDTree(leftPoints, depth + 1, xUnit,yUnit);
-                if (rightPoints.Count > 0) right = new KDTree(rightPoints, depth + 1, xUnit, yUnit);
+                if (leftPoints.Count > 0) left = new KDTree(leftPoints, depth + 1);
+                if (rightPoints.Count > 0) right = new KDTree(rightPoints, depth + 1);
                 min = new GeoPoint(points.Min(gp => gp.X), points.Min(gp => gp.Y));
                 max = new GeoPoint(points.Max(gp => gp.X), points.Max(gp => gp.Y));
             }
@@ -114,13 +110,55 @@ namespace GPNC
             }
             return allPoints;
         }
-        public int CountUnits(GeoPoint gp,int units) {
-            int xUnits = XUnit * units;
-            int yUnits = YUnit * units;
-            GeoPoint startPoint = new GeoPoint(gp.X - xUnits, gp.Y - yUnits);
-            Range r = new Range(startPoint,xUnits,yUnits);
+        public int CountUnits(GeoPoint gp, int gridsize)
+        {
+            int XUnit = (max.X - min.X) / gridsize;
+            int YUnit = (max.Y - min.Y) / gridsize;
+            GeoPoint startPoint = new GeoPoint(gp.X - XUnit, gp.Y - YUnit);
+            Range r = new Range(startPoint, XUnit*2, YUnit*2);
             return Count(r);
         }
+
+        public List<int> GetNodesOnGrid(int gridsize)
+        {
+            int XUnit = (max.X - min.X) / gridsize;
+            int YUnit = (max.Y - min.Y) / gridsize;
+            List<int> NodesOnGrid = new List<int>();
+            for (int x = 0; x < gridsize; x++)
+            {
+                for (int y = 0; y < gridsize; y++)
+                {
+                    int longitude = min.X + (x * XUnit);
+                    int latitude = min.Y + (y * YUnit);
+                    GeoPoint startPoint = new GeoPoint(longitude - XUnit, latitude - YUnit);
+                    Range r = new Range(startPoint, XUnit * 2, YUnit * 2);
+                    var nodesInRange = GetRange(r);
+                    if (nodesInRange.Count > 0) {
+                        var ClosestGP = nodesInRange.OrderBy(gp => 
+                            Math.Pow((longitude - gp.X), 2) + Math.Pow((latitude - gp.Y), 2)
+                        ).First();
+                        NodesOnGrid.Add(ClosestGP.Id);
+                    }
+                    Console.WriteLine(gridsize * x + y);
+                }
+            }
+
+            return NodesOnGrid;
+        }
+
+        public List<int> GetNodesMostDense(int gridsize) {
+            Dictionary<int, int> scores = new Dictionary<int, int>();
+            foreach (GeoPoint gp in ReportPoints())
+            {
+                int score = CountUnits(gp, gridsize);
+                scores[gp.Id] = score;
+            }
+            var orded = from pair in scores
+                        orderby pair.Value descending
+                        select pair.Key;
+            return orded.ToList();
+        }
+
 
         public int Count(Range range)
         {
@@ -206,19 +244,6 @@ namespace GPNC
             return depth % 2 == 0;
         }
 
-        public bool test(Range r)
-        {
-            if (isLeaf())
-            {
-                bool leafcase = IsFullyContained(r);
-                if (!leafcase) Console.WriteLine(ToString(0) + "\n" + min + "en" + max);
-                return leafcase;
-            }
-            else
-            {
-                return IsFullyContained(r) && left.test(r) && right.test(r);
-            }
-        }
 
         public List<Range> GetAllRange()
         {
@@ -290,11 +315,19 @@ namespace GPNC
     {
         public int X;
         public int Y;
-
+        public int Id;
         public GeoPoint(int x, int y)
         {
             X = x;
             Y = y;
+            Id = -1;
+        }
+
+        public GeoPoint(int x, int y, int id)
+        {
+            X = x;
+            Y = y;
+            Id = id;
         }
 
         public override string ToString()

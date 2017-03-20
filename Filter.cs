@@ -13,6 +13,7 @@ namespace GPNC
             BFS bfs = new BFS(G, G.nodes.Count, 1, 10, G.nodes.First());
             return G.CreateSubGraph(bfs.SubGraph);
         }
+
         public static void RemoveOneDegree(Graph G)
         {
             HashSet<int> possibleOneEdge = new HashSet<int>();
@@ -24,8 +25,6 @@ namespace GPNC
                     possibleOneEdge.Add(G.Contraction(neighbours[0], id));
                 }
             }
-            //Console.WriteLine(G.nodes.Count);
-            //Console.WriteLine(possibleOneEdge.Count);
             while (possibleOneEdge.Count > 0)
             {
                 List<int> loopList = possibleOneEdge.ToList();
@@ -38,8 +37,6 @@ namespace GPNC
                         possibleOneEdge.Add(G.Contraction(neighbours[0], id));
                     }
                 }
-                //Console.WriteLine(G.nodes.Count);
-                //Console.WriteLine(possibleOneEdge.Count);
             }
         }
         public static void RemoveTwoDegree(Graph G)
@@ -90,10 +87,6 @@ namespace GPNC
 
             }
             List<List<int>> contractions = ContractionList.Values.Distinct().ToList();
-            //int dubbelTest = 0;
-            //contractions.ForEach(x => { dubbelTest-- ; x.ForEach(y => dubbelTest++); });
-            //Console.WriteLine(dubbelTest);
-            //Console.ReadLine();
             contractions.ForEach(x => G.ContractList(x));
         }
     }

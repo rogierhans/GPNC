@@ -79,7 +79,7 @@ namespace GPNC
                 //HashSet<int> parpar = new HashSet<int>();
                 //partitionAndCut.Item1.ForEach(e => parpar.Add(e));
                 //Print.PrintCutFound(nodes, G.CreateSubGraphWithoutParent(bfs.SubGraph), bfs.SubGraph, partitionAndCut.Item1, parpar, bfs.Core, allNodes.Count.ToString());
-                //Console.WriteLine(allNodes.Count + "left");
+                Console.WriteLine(allNodes.Count + "left");
             }
 
             return allCuts;

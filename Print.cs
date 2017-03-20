@@ -61,9 +61,101 @@ namespace GPNC
             {
                 GeoPoint gp = nodes[id];
                 Color c = heatColor(minCount, maxCount, neighbourCount[id]);
-                gr.DrawRectangle(new Pen(c,20), calcX(gp, minLongi, maxLongi, size), calcY(gp, minLati, maxLati, size),1,1);
+                gr.DrawRectangle(new Pen(c, 20), calcX(gp, minLongi, maxLongi, size), calcY(gp, minLati, maxLati, size), 1, 1);
             }
             var path = location + "heatmap.bmp";
+            bmp.Save(path);
+        }
+
+        public static void PrintGrid(Graph OG, Dictionary<int, GeoPoint> nodes, List<int> GridNode, int gridSize)
+        {
+            int size = 5000;
+            var bmp = new Bitmap(size, size);
+            var gr = Graphics.FromImage(bmp);
+
+            int maxLati = OG.nodes.Max(x => nodes[x].Y);
+            int minLati = OG.nodes.Min(x => nodes[x].Y);
+            int maxLongi = OG.nodes.Max(x => nodes[x].X);
+            int minLongi = OG.nodes.Min(x => nodes[x].X);
+
+            //for (int x = 0; x < gridSize; x++)
+            //{
+            //    int longitude = minLongi + (x * ((maxLongi - minLongi) / gridSize));
+            //    GeoPoint np1 = new GeoPoint(longitude, 0);
+            //    GeoPoint npYmin = new GeoPoint(0, minLati);
+            //    GeoPoint npYmax = new GeoPoint(0, maxLati);
+            //    int XV = calcX(np1, minLongi, maxLongi, size);
+            //    Console.WriteLine(XV);
+            //    gr.DrawLine(new Pen(Color.Yellow, 10), XV, calcY(npYmin, minLati, maxLati, size), XV, calcY(npYmax, minLati, maxLati, size));
+            //}
+            //for (int y = 0; y < gridSize; y++)
+            //{
+            //    int latitude = minLati + (y * ((maxLati - minLati) / gridSize));
+            //    GeoPoint np1 = new GeoPoint(0, latitude);
+            //    GeoPoint npYmin = new GeoPoint(minLongi, 0);
+            //    GeoPoint npYmax = new GeoPoint(maxLongi, 0);
+            //    int YV = calcY(np1, minLati, maxLati, size);
+            //    Console.WriteLine(YV);
+            //    gr.DrawLine(new Pen(Color.Yellow, 10), calcX(npYmin, minLongi, maxLongi, size), YV, calcX(npYmax, minLongi, maxLongi, size), YV);
+            //}
+            //Console.ReadLine();
+            foreach (int id in OG.nodes)
+            {
+                GeoPoint gp = nodes[id];
+                gr.DrawRectangle(new Pen(Color.Red, 1), calcX(gp, minLongi, maxLongi, size), calcY(gp, minLati, maxLati, size), 1, 1);
+            }
+            foreach (int id in GridNode)
+            {
+                GeoPoint gp = nodes[id];
+                gr.DrawRectangle(new Pen(Color.Blue, 20), calcX(gp, minLongi, maxLongi, size), calcY(gp, minLati, maxLati, size), 5, 5);
+            }
+            var path = location + "gridMap.bmp";
+            bmp.Save(path);
+        }
+
+        public static void PrintGridSquare(Graph OG, Dictionary<int, GeoPoint> nodes,List<int> InS)
+        {
+            int size = 5000;
+            var bmp = new Bitmap(size, size);
+            var gr = Graphics.FromImage(bmp);
+
+            int maxLati = OG.nodes.Max(x => nodes[x].Y);
+            int minLati = OG.nodes.Min(x => nodes[x].Y);
+            int maxLongi = OG.nodes.Max(x => nodes[x].X);
+            int minLongi = OG.nodes.Min(x => nodes[x].X);
+
+            for (int x = 0; x < 20; x++)
+            {
+                int longitude = minLongi + (x * ((maxLongi - minLongi) / 20));
+                GeoPoint np1 = new GeoPoint(longitude, 0);
+                GeoPoint npYmin = new GeoPoint(0, minLati);
+                GeoPoint npYmax = new GeoPoint(0, maxLati);
+                int XV = calcX(np1, minLongi, maxLongi, size);
+                Console.WriteLine(XV);
+                gr.DrawLine(new Pen(Color.Yellow, 10), XV, calcY(npYmin, minLati, maxLati, size), XV, calcY(npYmax, minLati, maxLati, size));
+            }
+            for (int y = 0; y < 20; y++)
+            {
+                int latitude = minLati + (y * ((maxLati - minLati) / 20));
+                GeoPoint np1 = new GeoPoint(0, latitude);
+                GeoPoint npYmin = new GeoPoint(minLongi, 0);
+                GeoPoint npYmax = new GeoPoint(maxLongi, 0);
+                int YV = calcY(np1, minLati, maxLati, size);
+                Console.WriteLine(YV);
+                gr.DrawLine(new Pen(Color.Yellow, 10), calcX(npYmin, minLongi, maxLongi, size), YV, calcX(npYmax, minLongi, maxLongi, size), YV);
+            }
+            foreach (int id in OG.nodes)
+            {
+                GeoPoint gp = nodes[id];
+                gr.DrawRectangle(new Pen(Color.Red, 1), calcX(gp, minLongi, maxLongi, size), calcY(gp, minLati, maxLati, size), 1, 1);
+            }
+            foreach (int id in InS)
+            {
+                GeoPoint gp = nodes[id];
+                gr.DrawRectangle(new Pen(Color.Blue, 20), calcX(gp, minLongi, maxLongi, size), calcY(gp, minLati, maxLati, size), 5, 5);
+            }
+
+            var path = location + "gridSMap.bmp";
             bmp.Save(path);
         }
 
@@ -123,7 +215,7 @@ namespace GPNC
 
         public static void PrintCutsOnGraph(Dictionary<int, GeoPoint> nodes, Graph OG, Graph G, List<Edge> cuts, String filename)
         {
-            int size = 20000;
+            int size = 5000;
             var bmp = new Bitmap(size, size);
             var gr = Graphics.FromImage(bmp);
             int maxLati = OG.nodes.Max(x => nodes[x].Y);

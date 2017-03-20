@@ -53,7 +53,6 @@
     <Compile Include="Filter.cs" />
     <Compile Include="FindFragments.cs" />
     <Compile Include="Graph.cs" />
-    <Compile Include="ImprovedCutFinder.cs" />
     <Compile Include="IOGraph.cs" />
     <Compile Include="KDTree.cs" />
     <Compile Include="LocalSearch.cs" />

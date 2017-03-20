@@ -177,7 +177,7 @@ namespace GPNC
                     {
                         var lati = Int32.Parse(values[2]);
                         var longi = Int32.Parse(values[3]);
-                        dict[id] = new GeoPoint(longi,lati);
+                        dict[id] = new GeoPoint(longi,lati,id);
                     }
                 }
             }

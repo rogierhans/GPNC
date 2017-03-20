@@ -55,25 +55,28 @@ namespace GPNC
             // //Console.ReadLine();
             // //return;
             double alpha = 1;
-            int U = 100000;
+            //int U = 100000;
             string map = "NL";
-            double f = 20;
+            //double f = 20;
             //string Fragmented = "FG";
             //string Solution = "SG";
-            bool RemoveCore = false;
+            //bool RemoveCore = false;
             //// Graph G = IOGraph.GetFilteredGraph(map);
             //Graph OG = IOGraph.GetOriginalGraph(map);
 
 
             Graph OG = IOGraph.GetOriginalGraph(map);
             var nodes = Parser.ParseNodes(OG, map);
+            KDTree tree = new KDTree(nodes.Values.ToList());
+            //Print.PrintGrid(OG, nodes, tree.GetNodesOnGrid(40),40);
+            //Print.PrintGridSquare(OG, nodes, tree.test(20));
+            //return;
             //int minx = nodes.Values.Min(gp => gp.X);
             //int miny = nodes.Values.Min(gp => gp.Y);
             //int maxx = nodes.Values.Max(gp => gp.X);
             //int maxy = nodes.Values.Max(gp => gp.Y);
             //int XUnits = (maxx - minx) / 200;
             //int YUnits = (maxy - miny) / 200;
-            //KDTree tree = new KDTree(nodes.Values.ToList(),XUnits,YUnits);
             //Dictionary<int, int> scores = new Dictionary<int, int>();
             //foreach (int id in OG.nodes)
             //{
@@ -85,24 +88,42 @@ namespace GPNC
             //         orderby pair.Value descending
             //         select pair.Key;
             //List<int> OrdedNodes = orded.ToList();
-            var watch = System.Diagnostics.Stopwatch.StartNew();
+            //var watch = System.Diagnostics.Stopwatch.StartNew();
 
-            //make cuts and get the fragments
+            ////make cuts and get the fragments
 
-            // report the time
+            //// report the time
 
+            foreach (int U in new int[] { 250000, 1000000 })
+            {
+                for (double f = 5; f <= 25; f = f + 5)
+                {
+                    foreach (bool rc in new bool[] { false,true})
+                    {
+                        Report report = new Report(map, 25, U, alpha, f, rc, null);
+                        report.WriteLogToFile();
+                    }
+                }
+            }
+            foreach (int U in new int[] { 250000, 1000000 })
+            {
+                for (double f = 30; f <= 100; f = f + 10)
+                {
 
-            Graph G = IOGraph.GetFilteredGraph(map);
-            NaturalCut NC = new NaturalCut(G, U, alpha, f, RemoveCore);
-            HashSet<Edge> cuts = NC.MakeCuts(null);
-            List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
-            ps.ForEach(x => { int v = G.ContractList(x); });
-            Graph FG = G.CreateSubGraph(G.nodes.ToList());
-            G.ApplyGreedyAlgorithm(U);
-            G = LocalSearch.Search1(G, FG, U);
-            watch.Stop();
-            Console.WriteLine(watch.ElapsedMilliseconds);
-            Console.ReadLine();
+                    Report report = new Report(map, 25, U, alpha, f, false, null);
+                    report.WriteLogToFile();
+                }
+            }
+
+            return;
+            //Graph G = IOGraph.GetFilteredGraph(map);
+            //G = FindFragments.GetFragmentedGraph(G, U, alpha, f, RemoveCore, null);
+            //Graph FG = G.CreateSubGraph(G.nodes.ToList());
+            //G.ApplyGreedyAlgorithm(U);
+            //G = LocalSearch.Search1(G, FG, U);
+            ////watch.Stop();
+            ////Console.WriteLine(watch.ElapsedMilliseconds);
+            ////Console.ReadLine();
             //Print.makePrints(G, OG, nodes, U / 1000 + "f" + f + map + (RemoveCore ? "T" : "F"));
 
             //Print.PrintHeatMap(OG,nodes,scores);
@@ -140,13 +161,13 @@ namespace GPNC
 
             ////Find natural cuts and contract them
             //foreach (int U in new int[] { 250000, 1000000 })
-            ////{
-            ////    for (double f = 10; f <= 100; f = f + 10)
-            ////    {
-            ////        Report report = new Report(map, 10, U, alpha, f, RemoveCore);
-            ////        report.WriteLogToFile();
-            ////    }
-            ////}
+            //{
+            //    for (double f = 20; f <= 60; f = f + 20)
+            //    {
+            //        Report report = new Report(map, 5, U, alpha, f, RemoveCore);
+            //        report.WriteLogToFile();
+            //    }
+            //}
             //RemoveCore = true;
             ////Find natural cuts and contract them
             //foreach (int U in new int[] { 250000, 1000000 })
@@ -245,7 +266,7 @@ namespace GPNC
         double F;
         bool RemoveCore;
         string path = "F:\\Users\\Rogier\\Desktop\\Log\\";
-        public Report(string map, int n, int u, double alpha, double f, bool removeCore)
+        public Report(string map, int n, int u, double alpha, double f, bool removeCore, List<int> OD)
         {
             Map = map;
             N = n;
@@ -253,6 +274,12 @@ namespace GPNC
             Alpha = alpha;
             F = f;
             RemoveCore = removeCore;
+
+
+            Graph OG = IOGraph.GetOriginalGraph(map);
+            var nodes = Parser.ParseNodes(OG, map);
+
+
 
             string Solution = "SG";
             var pathLog = path + "log.csv";
@@ -270,10 +297,7 @@ namespace GPNC
                 var watch = System.Diagnostics.Stopwatch.StartNew();
 
                 //make cuts and get the fragments
-                NaturalCut NC = new NaturalCut(G,U,Alpha,F,RemoveCore);
-                HashSet<Edge> cuts = NC.MakeCuts(null);
-                List<List<int>> ps = FindFragments.FindPartions(G, cuts, U);
-                ps.ForEach(x => { int v = G.ContractList(x); });
+                G = FindFragments.GetFragmentedGraph(G, U, alpha, f, RemoveCore, OD);
 
                 // report the time
                 watch.Stop();
@@ -284,7 +308,7 @@ namespace GPNC
                 run.Fragments = G.nodes.Count;
 
                 //create a copy for later use
-                //TODO this could also be done in de Local Search
+                //TODO this could also be done in the Local Search
                 Graph FG = G.CreateSubGraph(G.nodes.ToList());
 
                 // restart the stopwatch
@@ -318,10 +342,12 @@ namespace GPNC
                 //write the solution found to file
                 IOGraph.WriteGraph(G, map + Solution + U / 1000 + i + "q" + f + (RemoveCore ? "T" : "F"));
 
-                Graph OG = IOGraph.GetOriginalGraph(map);
+                //Graph OG = IOGraph.GetOriginalGraph(map);
                 run.SetValues(G, OG);
                 run.WriteToFile(pathLog);
 
+
+                Print.makePrints(G, OG, nodes, U / 1000 + "f" + f + map + i + (RemoveCore ? "T" : "F"));
                 Runs.Add(run);
             }
         }
