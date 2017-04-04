@@ -9,10 +9,10 @@ namespace GPNC
     static class FindFragments
     {
 
-        public static Graph GetFragmentedGraph(Graph G, int U, double alpha, double f, bool RemoveCore, List<int> OD)
+        public static Graph GetFragmentedGraph(Graph G, int U, double alpha, double f, bool RemoveCore, List<int> OD, Dictionary<int,GeoPoint> nodes)
         {
-            NaturalCut NC = new NaturalCut(G, U, alpha, f, RemoveCore, OD);
-            HashSet<Edge> cuts = NC.MakeCuts(null);
+            NaturalCut NC = new NaturalCut(G, U, alpha, f, RemoveCore, OD,true);
+            HashSet<Edge> cuts = NC.MakeCuts(nodes);
             List<List<int>> ps = FindFragments.FindPartitions(G, cuts, U);
             ps.ForEach(x => { int v = G.ContractList(x); });
             return G;

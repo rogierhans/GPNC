@@ -8,6 +8,7 @@ using System.Drawing;
 using System.IO;
 using System.Drawing.Imaging;
 using System.Reflection;
+using System.Diagnostics;
 
 
 namespace GPNC
@@ -55,19 +56,64 @@ namespace GPNC
             // //Console.ReadLine();
             // //return;
             double alpha = 1;
-            //int U = 100000;
+            int U = 100000;
             string map = "NL";
             //double f = 20;
             //string Fragmented = "FG";
             //string Solution = "SG";
             //bool RemoveCore = false;
             //// Graph G = IOGraph.GetFilteredGraph(map);
-            //Graph OG = IOGraph.GetOriginalGraph(map);
-
-
             Graph OG = IOGraph.GetOriginalGraph(map);
-            var nodes = Parser.ParseNodes(OG, map);
-            KDTree tree = new KDTree(nodes.Values.ToList());
+
+
+            //Graph OG = IOGraph.GetOriginalGraph(map);
+            //int min = OG.nodes.Min(x => x);
+            //int max = OG.nodes.Max(x => x);
+            //Console.WriteLine($"{min} en {max}");
+
+
+            //return;
+            //Graph OG = IOGraph.GetOriginalGraph(map);
+            //var nodes = Parser.ParseNodes(OG, map);
+
+            //KDTree tree = new KDTree(nodes.Values.ToList());
+
+
+            //Console.WriteLine(odfake.Count);
+            //Report report = new Report(map, 25, U, alpha, 60, false, odfake, "yolotest");
+            //var OD100 = tree.GetNodesMostDense(100);
+            //var OD200 = tree.GetNodesMostDense(200);
+            //var OD400 = tree.GetNodesMostDense(400);
+            //var OD800 = tree.GetNodesMostDense(800);
+            //var OD1600 = tree.GetNodesMostDense(1600);
+            //var sw = new Stopwatch();
+            //sw.Start();
+
+            //for (int f = 20; f <=100; f =  f+20)
+            //{
+            //    for (int i = 0; i < 5; i++)
+            //    {
+            //        Report r = new Report(map,25,U,alpha,f,false, (int)Math.Pow(2, i) * 100,i.ToString());
+            //        r.WriteLogToFile();
+            //    }
+
+            //}
+            //for (int i = 0; i < 5; i++)
+            //{
+            //    Report r = new Report(map, 25, U, alpha, 10, true, (int)Math.Pow(2, i) * 100, i.ToString()); 
+            //    r.WriteLogToFile();
+            //}
+            //var G = IOGraph.GetOriginalGraph(map);
+            //var nodes = Parser.ParseNodes(G, map);
+            //KDTree kdtree = new KDTree(nodes.Values.ToList());
+
+            Report report = new Report(map, 25, U, alpha, 100, false, 35, 35.ToString());
+            report.WriteLogToFile();
+
+            //Print.PrintOrder(G, nodes, od, ((int)Math.Pow(2, i) * 100).ToString());
+
+            //}
+            //return;
             //Print.PrintGrid(OG, nodes, tree.GetNodesOnGrid(40),40);
             //Print.PrintGridSquare(OG, nodes, tree.test(20));
             //return;
@@ -94,30 +140,32 @@ namespace GPNC
 
             //// report the time
 
-            foreach (int U in new int[] { 250000, 1000000 })
-            {
-                for (double f = 5; f <= 25; f = f + 5)
-                {
-                    foreach (bool rc in new bool[] { false,true})
-                    {
-                        Report report = new Report(map, 25, U, alpha, f, rc, null);
-                        report.WriteLogToFile();
-                    }
-                }
-            }
-            foreach (int U in new int[] { 250000, 1000000 })
-            {
-                for (double f = 30; f <= 100; f = f + 10)
-                {
 
-                    Report report = new Report(map, 25, U, alpha, f, false, null);
-                    report.WriteLogToFile();
-                }
-            }
 
-            return;
+
+            //foreach (int U in new int[] { 100000, 250000 })
+            //{
+            //    for (double f = 30; f <= 100; f = f + 10)
+            //    {
+
+            //        Report report = new Report(map, 25, U, alpha, f, false, null);
+            //        report.WriteLogToFile();
+            //    }
+            //}
+            //foreach (int U in new int[] {250000 })
+            //{
+            //    for (double f = 5; f <= 20; f = f + 5)
+            //    {
+            //        foreach (bool rc in new bool[] { false, true })
+            //        {
+            //            Report report = new Report(map, 25, U, alpha, f, rc, null);
+            //            report.WriteLogToFile();
+            //        }
+            //    }
+            //}
+
             //Graph G = IOGraph.GetFilteredGraph(map);
-            //G = FindFragments.GetFragmentedGraph(G, U, alpha, f, RemoveCore, null);
+            //G = FindFragments.GetFragmentedGraph(G, U, alpha, f, RemoveCore, null,nodes);
             //Graph FG = G.CreateSubGraph(G.nodes.ToList());
             //G.ApplyGreedyAlgorithm(U);
             //G = LocalSearch.Search1(G, FG, U);
@@ -125,7 +173,7 @@ namespace GPNC
             ////Console.WriteLine(watch.ElapsedMilliseconds);
             ////Console.ReadLine();
             //Print.makePrints(G, OG, nodes, U / 1000 + "f" + f + map + (RemoveCore ? "T" : "F"));
-
+            return;
             //Print.PrintHeatMap(OG,nodes,scores);
             // int distance = 100000;
             // Dictionary<int, int> scores = new Dictionary<int, int>();
@@ -265,10 +313,12 @@ namespace GPNC
         double Alpha;
         double F;
         bool RemoveCore;
-        string path = "F:\\Users\\Rogier\\Desktop\\Log\\";
-        public Report(string map, int n, int u, double alpha, double f, bool removeCore, List<int> OD)
+        string path = "F:\\Users\\Rogier\\Google Drive\\Log\\";
+        string ExtraName;
+        public Report(string map, int n, int u, double alpha, double f, bool removeCore, int gridsize, string extraName)
         {
             Map = map;
+            ExtraName = extraName;
             N = n;
             U = u;
             Alpha = alpha;
@@ -283,6 +333,12 @@ namespace GPNC
 
             string Solution = "SG";
             var pathLog = path + "log.csv";
+
+
+            Graph GG = IOGraph.GetFilteredGraph(map);
+            var TreeNodes = Parser.ParseNodes(GG, map);
+            KDTree tree = new KDTree(TreeNodes.Values.ToList());
+            //var scores = tree.GetScores(gridsize);
             for (int i = 0; i < n; i++)
             {
 
@@ -297,7 +353,8 @@ namespace GPNC
                 var watch = System.Diagnostics.Stopwatch.StartNew();
 
                 //make cuts and get the fragments
-                G = FindFragments.GetFragmentedGraph(G, U, alpha, f, RemoveCore, OD);
+                var OD = tree.GetNodesOnGrid(gridsize);
+                G = FindFragments.GetFragmentedGraph(G, U, alpha, f, RemoveCore, OD, null);
 
                 // report the time
                 watch.Stop();
@@ -324,8 +381,8 @@ namespace GPNC
 
 
                 //count the intial cutweight
-                int weight = G.GetAllArcs().Sum(e => G.getWeight(e.To, e.From));
-                run.GreedyCut = weight;
+                //int weight = G.GetAllArcs().Sum(e => G.getWeight(e.To, e.From));
+                //run.GreedyCut = weight;
 
                 // restart the stopwatch
                 watch = System.Diagnostics.Stopwatch.StartNew();
@@ -362,7 +419,7 @@ namespace GPNC
             {
                 lines.Add(run.GetString());
             }
-            File.WriteAllLines(path + Map + U / 1000 + F + N + (RemoveCore ? "T" : "F") + "report.csv", lines.ToArray());
+            File.WriteAllLines(path + Map + U / 1000 + F + N + (RemoveCore ? "T" : "F") + ExtraName + "report.csv", lines.ToArray());
         }
 
         private string GetAverages()
@@ -371,9 +428,9 @@ namespace GPNC
             double totalTimeCutFinding = 0;
             double totalTimeGreedy = 0;
             double totalTimeLocalSearch = 0;
-            int totalCQMMeasure = 0;
+            //int totalCQMMeasure = 0;
             int totalBoundaryNodes = 0;
-            int totalGreedyCut = 0;
+            //int totalGreedyCut = 0;
             int totalCut = 0;
             int totalFragments = 0;
             foreach (SingleRun run in Runs)
@@ -381,9 +438,9 @@ namespace GPNC
                 totalTimeCutFinding += run.TimeCutFinding;
                 totalTimeGreedy += run.TimeGreedy;
                 totalTimeLocalSearch += run.TimeLocalSearch;
-                totalCQMMeasure += run.CQMMeasure;
+                //totalCQMMeasure += run.CQMMeasure;
                 totalBoundaryNodes += run.BoundaryNodes;
-                totalGreedyCut += run.GreedyCut;
+                //totalGreedyCut += run.GreedyCut;
                 totalCut += run.Cut;
                 totalFragments += run.Fragments;
             }
@@ -392,9 +449,9 @@ namespace GPNC
                 allAvgs.Add(((int)totalTimeCutFinding / Runs.Count).ToString());
                 allAvgs.Add(((int)totalTimeGreedy / Runs.Count).ToString());
                 allAvgs.Add(((int)totalTimeLocalSearch / Runs.Count).ToString());
-                allAvgs.Add((totalCQMMeasure / Runs.Count).ToString());
+                //allAvgs.Add((totalCQMMeasure / Runs.Count).ToString());
                 allAvgs.Add((totalBoundaryNodes / Runs.Count).ToString());
-                allAvgs.Add((totalGreedyCut / Runs.Count).ToString());
+                //allAvgs.Add((totalGreedyCut / Runs.Count).ToString());
                 allAvgs.Add((totalCut / Runs.Count).ToString());
                 allAvgs.Add((totalFragments / Runs.Count).ToString());
             }
@@ -407,9 +464,9 @@ namespace GPNC
         public double TimeCutFinding;
         public double TimeGreedy;
         public double TimeLocalSearch;
-        public int CQMMeasure;
+        //public int CQMMeasure;
         public int BoundaryNodes;
-        public int GreedyCut;
+        //public int GreedyCut;
         public int Cut;
         public int Fragments;
 
@@ -435,7 +492,7 @@ namespace GPNC
 
         public string GetFirstLine()
         {
-            return String.Join(",", new List<string>() { "Finding Cuts", "Greedy", "Local Search", "CQM Measure", "BoundaryNodes", "GreedyCut", "Cut", "Fragments" });
+            return String.Join(",", new List<string>() { "Finding Cuts", "Greedy", "Local Search", "Fragments", "BoundaryNodes", "Cut" });
         }
 
         public string GetString()
@@ -444,11 +501,12 @@ namespace GPNC
             info.Add(TimeCutFinding.ToString());
             info.Add(TimeGreedy.ToString());
             info.Add(TimeLocalSearch.ToString());
-            info.Add(CQMMeasure.ToString());
-            info.Add(BoundaryNodes.ToString());
-            info.Add(GreedyCut.ToString());
-            info.Add(Cut.ToString());
+            //info.Add(CQMMeasure.ToString());
             info.Add(Fragments.ToString());
+            info.Add(BoundaryNodes.ToString());
+            //info.Add(GreedyCut.ToString());
+            info.Add(Cut.ToString());
+
             return String.Join(",", info);
         }
 
@@ -483,7 +541,7 @@ namespace GPNC
             BoundaryNodes = 0;
             partitionToBoundaryNodes.Values.ToList().ForEach(x => BoundaryNodes += x.Count);
 
-            CQMMeasure = -1;
+            //CQMMeasure = -1;
             //(int)QualityNode(G, OG, partitions);
         }
         public double QualityNode(Graph G, Graph OG, Dictionary<int, HashSet<int>> partitions)

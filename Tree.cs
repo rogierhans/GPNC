@@ -29,7 +29,7 @@ namespace GPNC
             Console.WriteLine("NC:{0} with {1}", G.nodes.Count, MinSize);
             if (G.nodes.Count > MinSize)
             {
-                G = FindFragments.GetFragmentedGraph(G, U, alpha, f, false,null);
+                G = FindFragments.GetFragmentedGraph(G, U, alpha, f, false,null,null);
                 Graph FG = G.CreateSubGraph(G.nodes.ToList());
                 Console.WriteLine(G.nodes.Count);
                 G.ApplyGreedyAlgorithm(U);

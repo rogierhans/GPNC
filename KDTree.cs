@@ -110,31 +110,35 @@ namespace GPNC
             }
             return allPoints;
         }
-        public int CountUnits(GeoPoint gp, int gridsize)
+        public double CountUnits(GeoPoint gp, int gridsize)
         {
             int XUnit = (max.X - min.X) / gridsize;
             int YUnit = (max.Y - min.Y) / gridsize;
             GeoPoint startPoint = new GeoPoint(gp.X - XUnit, gp.Y - YUnit);
-            Range r = new Range(startPoint, XUnit*2, YUnit*2);
+            Range r = new Range(startPoint, XUnit * 2, YUnit * 2);
             return Count(r);
         }
 
         public List<int> GetNodesOnGrid(int gridsize)
         {
+            Random rng = new Random();
             int XUnit = (max.X - min.X) / gridsize;
             int YUnit = (max.Y - min.Y) / gridsize;
             List<int> NodesOnGrid = new List<int>();
+            double xDisturbance = rng.NextDouble();
+            double yDisturbance = rng.NextDouble();
             for (int x = 0; x < gridsize; x++)
             {
                 for (int y = 0; y < gridsize; y++)
                 {
-                    int longitude = min.X + (x * XUnit);
-                    int latitude = min.Y + (y * YUnit);
+                    int longitude = min.X + (int)((xDisturbance + x) * XUnit);
+                    int latitude = min.Y + (int)((yDisturbance + y) * YUnit);
                     GeoPoint startPoint = new GeoPoint(longitude - XUnit, latitude - YUnit);
                     Range r = new Range(startPoint, XUnit * 2, YUnit * 2);
                     var nodesInRange = GetRange(r);
-                    if (nodesInRange.Count > 0) {
-                        var ClosestGP = nodesInRange.OrderBy(gp => 
+                    if (nodesInRange.Count > 0)
+                    {
+                        var ClosestGP = nodesInRange.OrderBy(gp =>
                             Math.Pow((longitude - gp.X), 2) + Math.Pow((latitude - gp.Y), 2)
                         ).First();
                         NodesOnGrid.Add(ClosestGP.Id);
@@ -146,14 +150,30 @@ namespace GPNC
             return NodesOnGrid;
         }
 
-        public List<int> GetNodesMostDense(int gridsize) {
-            Dictionary<int, int> scores = new Dictionary<int, int>();
+
+
+        public Dictionary<int, double> GetScores(int gridSize)
+        {
+            Dictionary<int, double> scores = new Dictionary<int, double>();
             foreach (GeoPoint gp in ReportPoints())
             {
-                int score = CountUnits(gp, gridsize);
+                double score = CountUnits(gp, gridSize);
                 scores[gp.Id] = score;
             }
-            var orded = from pair in scores
+            return scores;
+        }
+
+        public List<int> GetOrder(Dictionary<int, double> scores)
+        {
+            Random rng = new Random();
+            double disturbance;
+            Dictionary<int, double> newScores = new Dictionary<int, double>();
+            foreach (var kvp in scores)
+            {
+                disturbance = rng.NextDouble() * 0.01 + 0.995;
+                newScores[kvp.Key] = scores[kvp.Key] * disturbance;
+            }
+            var orded = from pair in newScores
                         orderby pair.Value descending
                         select pair.Key;
             return orded.ToList();

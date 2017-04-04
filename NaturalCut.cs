@@ -21,6 +21,7 @@ namespace GPNC
         double F;
         bool RemoveCore;
         List<int> OrdedNodes;
+        bool usingGrid;
         public NaturalCut(Graph g, int u, double alpha, double f, bool removeCore)
         {
             G = g;
@@ -29,15 +30,18 @@ namespace GPNC
             F = f;
             RemoveCore = removeCore;
         }
-        public NaturalCut(Graph g, int u, double alpha, double f, bool removeCore, List<int> ordedNodes)
+        public NaturalCut(Graph g, int u, double alpha, double f, bool removeCore, List<int> ordedNodes, bool useGrid)
         {
             G = g;
             U = u;
             Alpha = alpha;
             F = f;
             RemoveCore = removeCore;
+            maxIndex = ordedNodes.Count;
             OrdedNodes = ordedNodes;
+            usingGrid = useGrid;
         }
+
 
 
         private BFS bfs;
@@ -45,6 +49,7 @@ namespace GPNC
         private List<int> result;
         private int s;
         private int t;
+
         public HashSet<Edge> MakeCuts(Dictionary<int, GeoPoint> nodes)
         {
             HashSet<int> allNodes = new HashSet<int>();
@@ -55,14 +60,18 @@ namespace GPNC
 
             HashSet<Edge> allCuts = new HashSet<Edge>();
             Random rnd = new Random();
-            while (allNodes.Count > 0)
+            while (allNodes.Count > 0 && maxIndex > index)
             {
                 int startNodeForBFS;
                 if (OrdedNodes == null)
                 {
                     startNodeForBFS = RandomID(allNodes, rnd);
                 }
-                else {
+                else if (usingGrid) {
+                    startNodeForBFS = GetNodeOnGrid();
+                }
+                else
+                {
                     startNodeForBFS = GetMostDenseNode(allNodes);
                 }
 
@@ -74,19 +83,19 @@ namespace GPNC
                 {
                     result.ForEach(y => allNodes.Remove(y));
                 }
-
                 cut.ForEach(y => allCuts.Add(y));
-                //HashSet<int> parpar = new HashSet<int>();
-                //partitionAndCut.Item1.ForEach(e => parpar.Add(e));
-                //Print.PrintCutFound(nodes, G.CreateSubGraphWithoutParent(bfs.SubGraph), bfs.SubGraph, partitionAndCut.Item1, parpar, bfs.Core, allNodes.Count.ToString());
+
                 Console.WriteLine(allNodes.Count + "left");
             }
 
             return allCuts;
         }
 
+
+
         private int index = 0;
-        private int GetMostDenseNode(HashSet<int> allNodes) {
+        private int GetMostDenseNode(HashSet<int> allNodes)
+        {
             int rID = -1;
             while (rID == -1)
             {
@@ -100,6 +109,11 @@ namespace GPNC
                 }
             }
             return rID;
+        }
+        private int maxIndex = Int32.MaxValue;
+        private int GetNodeOnGrid()
+        {
+            return OrdedNodes[index++];
         }
 
         private int RandomID(HashSet<int> allNodes, Random rnd)
